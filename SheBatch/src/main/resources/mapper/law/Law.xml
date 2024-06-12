@@ -1,0 +1,502 @@
+<?xml version= "1.0" encoding= "UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace= "com.batch.mapper.LawMapper">
+
+	<select id= "getSelect" resultType= "com.batch.utils.model.CodeMaster">
+		select code_group_cd
+			 ,code
+			 ,code_nm
+			 ,code_abbr
+			 ,attr1
+			 ,attr2
+			 ,attr3
+			 ,remarks
+			 ,sort_order
+			 ,use_yn
+			 , case when use_yn = 'Y' then '사용'else '미사용' end as use_yn_nm
+		from com_code_master
+		where use_yn = 'Y'
+		  and code_group_cd = #{codeGroupCd}
+		order by sort_order
+	</select>
+
+	<select id="getlawElawSeq" resultType="int">
+		/* LawMapper.getlawElawSeq [Law.xml] */
+		select next value for seq_law_elaw as seq_no
+	</select>
+
+	<insert id= "mergeLawIF" parameterType= "com.batch.utils.model.LawElaw">
+		/* LawMapper.mergeLawIF [Law.xml] */
+		merge into law_elaw as t
+			using (SELECT  #{lmst}
+						,#{lstepNm}
+						,#{lnameKor}
+						,#{lnameAbb}
+						,#{lkey}
+						,#{promDate}
+						,#{promNum}
+						,#{revDiv}
+						,#{mgrGovcd}
+						,#{mgrGov}
+						,#{ltypeNm}
+						,#{enfDate}
+						,#{lflagNm}
+						,#{ldtlLink}
+						,#{lawTypeCd}
+						,#{legiKey}
+			) AS S
+				(LMST
+					,LSTEP_NM
+					,LNAME_KOR
+					,LNAME_ABB
+					,LKEY
+					,PROM_DATE
+					,PROM_NUM
+					,REV_DIV
+					,MGR_GOVCD
+					,MGR_GOV
+					,LTYPE_NM
+					,ENF_DATE
+					,LFLAG_NM
+					,LDTL_LINK
+					,LAW_TYPE_CD
+					,LEGI_KEY
+					)
+			ON (T.LMST = convert(int,S.LMST) AND T.LKEY = S.LKEY AND T.PROM_DATE = S.PROM_DATE AND T.PROM_NUM = S.PROM_NUM AND T.ENF_DATE = S.ENF_DATE)
+			WHEN MATCHED THEN
+
+				UPDATE  SET
+					LSTEP_NM = #{lstepNm}
+					,LNAME_KOR = #{lnameKor}
+					,LNAME_ABB = #{lnameAbb}
+					,REV_DIV = #{revDiv}
+					,MGR_GOVCD = #{mgrGovcd}
+					,MGR_GOV = #{mgrGov}
+					,LTYPE_NM = #{ltypeNm}
+					,ENF_DATE = #{enfDate}
+					,LFLAG_NM  = #{lflagNm}
+					,LDTL_LINK  = #{ldtlLink}
+					,UDT_DT  = getdate()
+					,LEGI_KEY = #{legiKey}
+					,LAW_TYPE_CD = #{lawTypeCd}
+
+			WHEN NOT MATCHED THEN
+
+				INSERT ( SEQ_NO
+					,LMST
+					,LSTEP_NM
+					,LNAME_KOR
+					,LNAME_ABB
+					,LKEY
+					,PROM_DATE
+					,PROM_NUM
+					,REV_DIV
+					,MGR_GOVCD
+					,MGR_GOV
+					,LTYPE_NM
+					,ENF_DATE
+					,LFLAG_NM
+					,LDTL_LINK
+					,REG_DT
+					,DTL_INS_FLAG
+					,LEGI_KEY
+					,LAW_TYPE_CD
+					)
+					VALUES ( #{seqNo}
+						   ,convert(int,#{lmst})
+						   ,#{lstepNm}
+						   ,#{lnameKor}
+						   ,#{lnameAbb}
+						   ,#{lkey}
+						   ,#{promDate}
+						   ,#{promNum}
+						   ,#{revDiv}
+						   ,#{mgrGovcd}
+						   ,#{mgrGov}
+						   ,#{ltypeNm}
+						   ,#{enfDate}
+						   ,#{lflagNm}
+						   ,#{ldtlLink}
+						   ,getdate() ,'N'
+						   ,#{legiKey}
+						   ,#{lawTypeCd}
+						   );
+	</insert>
+
+	<select id="getlawMakingSeq" resultType="int">
+		/* SheLawMapper.getlawMakingSeq [SheLaw.xml] */
+		select next value for seq_law_making as seq_no
+	</select>
+
+	<insert id= "mergeLawMakingIF" parameterType= "com.batch.utils.model.LawMaking">
+		/* LawMapper.mergeLawMakingIF [Law.xml] */
+		MERGE INTO law_making AS t
+			USING (SELECT  #{ogLmPpSeq}
+						,#{mappingLbicId}
+						,#{announceType}
+			) AS S
+				(OG_LM_PP_SEQ
+					,MAPPING_LBIC_ID
+					,ANNOUNCE_TYPE
+					)
+			ON (T.OG_LM_PP_SEQ = S.OG_LM_PP_SEQ
+				AND T.MAPPING_LBIC_ID = S.MAPPING_LBIC_ID
+				AND T.ANNOUNCE_TYPE = S.ANNOUNCE_TYPE)
+			WHEN MATCHED THEN
+
+				UPDATE  SET
+					IS_NM = #{isNm}
+					,IS_CLS_NM = #{isClsNm}
+					,MGR_GOVCD = #{mgrGovcd}
+					,ASND_OFI_NM = #{asndOfiNm}
+					,PNTC_NO = #{pntcNo}
+					,PNTC_DT = #{pntcDt}
+					,ST_YD = #{stYd}
+					,ED_YD = #{edYd}
+					,FILE_NAME = #{fileName}
+					,FILE_DOWN_LINK  = #{fileDownLink}
+					,READ_CNT  = #{readCnt}
+					,DETAIL_URL  = #{detailUrl}
+					,UDT_DT  = getdate()
+					,DETAIL_CONTENTS = #{detailContents}
+			WHEN NOT MATCHED THEN
+
+				INSERT (SEQ_NO
+				    ,OG_LM_PP_SEQ
+					,IS_NM
+					,IS_CLS_NM
+					,MGR_GOVCD
+					,ASND_OFI_NM
+					,PNTC_NO
+					,PNTC_DT
+					,ST_YD
+					,ED_YD
+					,FILE_NAME
+					,FILE_DOWN_LINK
+					,READ_CNT
+					,MAPPING_LBIC_ID
+					,ANNOUNCE_TYPE
+					,DETAIL_URL
+					,REG_DT
+				    ,NOTI_YN
+					,DETAIL_CONTENTS
+					)
+					VALUES (#{seqNo}
+					       ,#{ogLmPpSeq}
+						   ,#{isNm}
+						   ,#{isClsNm}
+						   ,#{mgrGovcd}
+						   ,#{asndOfiNm}
+						   ,#{pntcNo}
+						   ,#{pntcDt}
+						   ,#{stYd}
+						   ,#{edYd}
+						   ,#{fileName}
+						   ,#{fileDownLink}
+						   ,CONVERT(numeric(18,0),#{readCnt})
+						   ,#{mappingLbicId}
+						   ,#{announceType}
+						   ,#{detailUrl}
+						   ,getdate()
+						   ,'N'
+						   ,#{detailContents}
+						   );
+	</insert>
+
+	<!-- 등록한 법규 목록 조회 (상세 생성하지 않은 정보만) -->
+ <!-- 20240104: 조회년도를 과거1년,미래2년으로 변경 -->
+	<select id="selectLawBasicList" resultType="com.batch.utils.model.LegiLawBasics">
+		/* LawMapper.selectLawBasicList [Law.xml] */
+		 select  le.legi_key
+    ,le.law_type_cd
+    ,le.lkey as legi_id
+    ,le.prom_date
+    ,le.prom_num
+    ,le.ltype_nm
+    ,le.lmst
+    ,le.lname_kor
+    ,le.lname_abb
+    ,le.enf_date
+  from law_elaw le
+  inner join com_code_master type on type.code = le.lkey and type.use_yn='Y'
+  where dtl_ins_flag = 'N'
+  and isnull(legi_key, '') != ''
+  --and le.prom_date between convert(char(8), DATEADD(yy, -1, getdate()), 112) and convert(char(8), DATEADD(yy, 2, getdate()), 112)
+  and le.prom_date between convert(char(8), DATEADD(yy, -8, getdate()), 112) and convert(char(8), DATEADD(yy, 2, getdate()), 112)
+	</select>
+
+	<update id="mergeLawBasicIF">
+		/* LawMapper.mergeLawBasicIF [Law.xml] */
+		merge into com_legi_law_basics T
+		using (
+			select #{legiKey} as legi_key
+		) S
+		on (T.legi_key = S.legi_key)
+		when not matched then
+			insert (
+				legi_key
+				,law_type_cd
+				,legi_id
+				,prom_date
+				,prom_num
+				,lang
+				,ltype_nm
+				,ltype_cd
+				,lname_kor
+				,lname_eng
+				,lname_abb
+				,attri_side
+				,mgr_gov
+				,mgr_govcd
+				,enf_date
+				,rev_div
+				,atfm_enf_date_txt
+				,atfm_edit_flag
+				,prom_flag
+				,create_dt
+				,lname_zh
+				,prov_enf_date_txt
+			)
+			values (
+				#{legiKey}
+				,#{lawTypeCd,jdbcType=VARCHAR}
+				,#{legiId,jdbcType=VARCHAR}
+				,#{promDate,jdbcType=VARCHAR}
+				,#{promNum,jdbcType=VARCHAR}
+				,#{lang,jdbcType=VARCHAR}
+				,#{ltypeNm,jdbcType=VARCHAR}
+				,#{ltypeCd,jdbcType=VARCHAR}
+				,#{lnameKor,jdbcType=VARCHAR}
+				,#{lnameEng,jdbcType=VARCHAR}
+				,#{lnameAbb,jdbcType=VARCHAR}
+				,#{attriSide,jdbcType=VARCHAR}
+				,#{mgrGov,jdbcType=VARCHAR}
+				,#{mgrGovcd,jdbcType=VARCHAR}
+				,#{enfDate,jdbcType=VARCHAR}
+				,#{revDiv,jdbcType=VARCHAR}
+				,#{atfmEnfDateTxt,jdbcType=VARCHAR}
+				,#{atfmEditFlag,jdbcType=VARCHAR}
+				,#{promFlag,jdbcType=VARCHAR}
+				,GETDATE()
+				,#{lnameZh,jdbcType=VARCHAR}
+				,#{provEnfDateTxt,jdbcType=VARCHAR}
+			)
+		when matched then
+			update set
+				law_type_cd = #{lawTypeCd,jdbcType=VARCHAR}
+				,legi_id = #{legiId,jdbcType=VARCHAR}
+				,prom_date = #{promDate,jdbcType=VARCHAR}
+				,prom_num = #{promNum,jdbcType=VARCHAR}
+				,lang = #{lang,jdbcType=VARCHAR}
+				,ltype_nm = #{ltypeNm,jdbcType=VARCHAR}
+				,ltype_cd = #{ltypeCd,jdbcType=VARCHAR}
+				,lname_kor = #{lnameKor,jdbcType=VARCHAR}
+				,lname_eng = #{lnameEng,jdbcType=VARCHAR}
+				,lname_abb = #{lnameAbb,jdbcType=VARCHAR}
+				,attri_side = #{attriSide,jdbcType=VARCHAR}
+				,mgr_gov = #{mgrGov,jdbcType=VARCHAR}
+				,mgr_govcd = #{mgrGovcd,jdbcType=VARCHAR}
+				,enf_date = #{enfDate,jdbcType=VARCHAR}
+				,rev_div = #{revDiv,jdbcType=VARCHAR}
+				,atfm_enf_date_txt = #{atfmEnfDateTxt,jdbcType=VARCHAR}
+				,atfm_edit_flag = #{atfmEditFlag,jdbcType=VARCHAR}
+				,prom_flag = #{promFlag,jdbcType=VARCHAR}
+				,update_dt = GETDATE()
+				,lname_zh = #{lnameZh,jdbcType=VARCHAR}
+				,prov_enf_date_txt = #{provEnfDateTxt,jdbcType=VARCHAR}
+		;
+	</update>
+
+	<update id="mergeLawJomunIf">
+		/* LawMapper.mergeLawJomunIf [Law.xml] */
+		merge into com_legi_law_jomun T
+		using (
+			select  #{legiKey} as legi_key
+					,#{provKey} as prov_key
+		) S
+		on (T.legi_key = S.legi_key and T.prov_key = S.prov_key)
+		when not matched then
+			insert (
+				legi_key
+				,prov_key
+				,prov_num
+				,prov_num_bran
+				,prov_yn
+				,prov_title
+				,prov_enf_date
+				,prov_rev_type
+				,prov_rev_date_txt
+				,prov_prev
+				,prov_next
+				,prov_chng_yn
+				,prov_content
+				,prov_ref
+				,prov_ref2
+			)
+			values (
+				#{legiKey}
+				,#{provKey}
+				,#{provNum,jdbcType=VARCHAR}
+				,#{provNumBran,jdbcType=VARCHAR}
+				,#{provYn,jdbcType=VARCHAR}
+				,#{provTitle,jdbcType=VARCHAR}
+				,#{provEnfDate,jdbcType=VARCHAR}
+				,#{provRevType,jdbcType=VARCHAR}
+				,#{provRevDateTxt,jdbcType=VARCHAR}
+				,#{provPrev,jdbcType=VARCHAR}
+				,#{provNext,jdbcType=VARCHAR}
+				,#{provChngYn,jdbcType=VARCHAR}
+				,#{provContent,jdbcType=VARCHAR}
+				,#{provRef,jdbcType=VARCHAR}
+				,#{provRef2,jdbcType=VARCHAR}
+			)
+		when matched then
+			update set
+				prov_num = #{provNum,jdbcType=VARCHAR}
+				,prov_num_bran = #{provNumBran,jdbcType=VARCHAR}
+				,prov_yn = #{provYn,jdbcType=VARCHAR}
+				,prov_title = #{provTitle,jdbcType=VARCHAR}
+				,prov_enf_date = #{provEnfDate,jdbcType=VARCHAR}
+				,prov_rev_type = #{provRevType,jdbcType=VARCHAR}
+				,prov_rev_date_txt = #{provRevDateTxt,jdbcType=VARCHAR}
+				,prov_prev = #{provPrev,jdbcType=VARCHAR}
+				,prov_next = #{provNext,jdbcType=VARCHAR}
+				,prov_chng_yn = #{provChngYn,jdbcType=VARCHAR}
+				,prov_content = #{provContent,jdbcType=VARCHAR}
+				,prov_ref = #{provRef,jdbcType=VARCHAR}
+				,prov_ref2 = #{provRef2,jdbcType=VARCHAR}
+		;
+	</update>
+
+	<update id="mergeLawHangIf">
+		/* LawMapper.mergeLawHangIf [Law.xml] */
+		<selectKey keyProperty="seqNo" resultType="int" order="BEFORE">
+		select next value for seq_com_legi_law_hang as seqNo
+		</selectKey>
+		merge into com_legi_law_hang T
+		using (
+			select  #{legiKey} as legi_key
+					,#{provKey} as prov_key
+					,#{claNum,jdbcType=NVARCHAR} as cla_num
+		) S
+		on (T.legi_key = S.legi_key and T.prov_key = S.prov_key and T.cla_num = S.cla_num)
+		when not matched then
+			insert (
+				legi_key
+				,prov_key
+				,cla_num
+				,cla_content
+				,cla_rev_type
+				,cla_rev_date_txt
+				,seq_no
+			)
+			values (
+				#{legiKey}
+				,#{provKey}
+				,#{claNum,jdbcType=NVARCHAR}
+				,#{claContent,jdbcType=NVARCHAR}
+				,#{claRevType,jdbcType=VARCHAR}
+				,#{claRevDateTxt,jdbcType=VARCHAR}
+				,#{seqNo}
+			)
+		when matched then
+			update set
+				cla_content = #{claContent,jdbcType=NVARCHAR}
+				,cla_rev_type = #{claRevType,jdbcType=VARCHAR}
+				,cla_rev_date_txt = #{claRevDateTxt,jdbcType=VARCHAR}
+		;
+	</update>
+
+	<update id="mergeLawHoIf">
+		/* LawMapper.mergeLawHoIf [Law.xml] */
+		<selectKey keyProperty="seqNo" resultType="int" order="BEFORE">
+		select next value for seq_com_legi_law_ho as seqNo
+		</selectKey>
+		merge into com_legi_law_ho T
+		using (
+		select  #{legiKey} as legi_key
+				,#{provKey} as prov_key
+				,#{claNum,jdbcType=NVARCHAR} as cla_num
+				,#{numbNum} as numb_num
+		) S
+		on (T.legi_key = S.legi_key and T.prov_key = S.prov_key and T.cla_num = S.cla_num and T.numb_num = S.numb_num)
+		when not matched then
+			insert (
+				seq_no
+				,legi_key
+				,prov_key
+				,cla_num
+				,numb_num
+				,numb_num_bran
+				,numb_content
+			)
+			values (
+				#{seqNo}
+				,#{legiKey}
+				,#{provKey}
+				,#{claNum,jdbcType=NVARCHAR}
+				,#{numbNum}
+				,#{numbNumBran,jdbcType=VARCHAR}
+				,#{numbContent,jdbcType=VARCHAR}
+			)
+		when matched then
+			update set
+				numb_num_bran = #{numbNumBran,jdbcType=VARCHAR}
+				,numb_content = #{numbContent,jdbcType=VARCHAR}
+		;
+	</update>
+
+	<update id="mergeLawMokIf">
+		/* LawMapper.mergeLawMokIf [Law.xml] */
+		<selectKey keyProperty="seqNo" resultType="int" order="BEFORE">
+		select next value for seq_com_legi_law_mok as seqNo
+		</selectKey>
+		merge into com_legi_law_mok T
+		using (
+			select  #{legiKey} as legi_key
+					,#{provKey} as prov_key
+					,#{claNum,jdbcType=NVARCHAR} as cla_num
+					,#{numbNum,jdbcType=VARCHAR} as numb_num
+					,#{numbNumBran,jdbcType=VARCHAR} as numb_num_bran
+					,#{mokNum} as mok_num
+		) as S
+		on (T.legi_key = S.legi_key and T.prov_key = S.prov_key and T.cla_num = S.cla_num
+			and T.numb_num = S.numb_num and T.numb_num_bran = S.numb_num_bran and T.mok_num = S.mok_num)
+		when not matched then
+			insert (
+				seq_no
+				,legi_key
+				,prov_key
+				,cla_num
+				,numb_num
+				,numb_num_bran
+				,mok_num
+				,mok_content
+			)
+			values (
+				#{seqNo}
+				,#{legiKey}
+				,#{provKey}
+				,#{claNum,jdbcType=NVARCHAR}
+				,#{numbNum,jdbcType=VARCHAR}
+				,#{numbNumBran,jdbcType=VARCHAR}
+				,#{mokNum}
+				,#{mokContent,jdbcType=VARCHAR}
+			)
+		when matched then
+			update set
+				mok_content = #{mokContent,jdbcType=VARCHAR}
+		;
+	</update>
+ <!-- 20240104 법령 상세정보가 저장된 공포법령만 상세입력여부가 Y로 변경되게 수정 -->
+	<update id="updateLawElaw">
+	 update law_elaw
+  set dtl_ins_flag = 'Y'
+  where dtl_ins_flag = 'N'
+  and isnull(legi_key, '') != ''
+  and legi_key in (select legi_key from com_legi_law_basics)
+  --and prom_date between convert(char(8), DATEADD(yy, -1, getdate()), 112) and convert(char(8), DATEADD(yy, 2, getdate()), 112)
+	</update>
+
+</mapper>

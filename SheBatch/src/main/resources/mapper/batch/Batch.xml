@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.batch.mapper.BatchMapper">
+
+   
+
+    <select id="getBatch" resultType="com.batch.utils.model.Batch">
+        /* BatchMapper.getBatch [Batch.xml] */
+        SELECT cbs.batch_cd
+              ,cbs.batch_nm
+              ,cbs.batch_desc
+              ,cbs.cycle_start_ymd
+			  ,cbs.alarm_no
+			  ,ca.alarm_nm
+              ,cbs.cycle_day_cd
+              ,cbs.cycle_day
+              ,cbs.cycle_hm_cd
+              ,cbs.cycle_hm
+              ,case when cbs.cycle_hm_cd = 'R'
+                    Then ''
+                    else SUBSTRING(cbs.cycle_hm, 1,2) + ':' + SUBSTRING(cbs.cycle_hm, 3, 4)
+               end as cycle_hm_nm
+              ,cbs.use_yn
+              , isnull(cbs.batch_day, 0) as batch_day
+              ,cbs.create_user_id
+              ,cbs.create_dt
+              ,cbs.update_user_id
+              ,cbs.update_dt
+          FROM com_batch_service cbs
+          left join com_alarm ca on cbs.alarm_no = ca.alarm_no and ca.alarm_type = 'B'
+         WHERE cbs.batch_cd = #{batchCd}
+    </select>
+
+   
+
+  
+
+
+</mapper>

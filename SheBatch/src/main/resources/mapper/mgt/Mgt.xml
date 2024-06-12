@@ -1,0 +1,242 @@
+<?xml version= "1.0" encoding= "UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace= "com.batch.mapper.MgtTgtMapper">
+
+ <select id="getUserList" resultType="com.batch.utils.model.EduUser">
+ /* EduMasterMapper.getUserList [Law.xml] */
+ select 
+psn.user_id,
+psn.dept_cd,
+cu.email,
+cu.user_nm,
+cd.dept_nm,
+sem.saf_edu_mst_no,
+sem.saf_edu_course_no,
+sec.edu_course_nm,
+sem.edu_nm,
+sem.edu_s_ymd +' ~ '+sem.edu_e_ymd  as period,
+sem.edu_place,
+sem.create_user_id,
+sem.edu_s_ymd
+from saf_edu_mst sem
+left join saf_edu_course sec 
+on sec.saf_edu_course_no = sem.saf_edu_course_no
+left join saf_edu_dtl_psn psn
+on sem.saf_edu_mst_no = psn.saf_edu_mst_no
+left join com_user cu
+on cu.user_id = psn.user_id
+left join com_dept cd 
+on cd.dept_cd = psn.dept_cd
+where 1=1 
+and edu_s_ymd = #{eduSYmd}
+and sem.p_proc_step_cd = 'CS001'
+and sem.r_proc_step_cd = 'CS002'
+and sem.p_state_cd = 'STATE4'
+and sem.r_state_cd = 'STATE1'
+and sem.p_step_cd = 'BAPSG'
+and sem.r_step_cd = 'BAPSB'
+ 
+ </select>
+ 
+  <select id="getMgtTgtList" resultType="com.batch.utils.model.mgtTgtPlan">
+   /* MgtTgtMapper."getMgtTgtList" [Mgt.xml] */
+select rslt.year,
+ rslt.appr_unit_cd,
+ rslt.plant_cd,
+ rslt.create_user_id as user_id,
+ cd.dept_nm,
+ cu.user_nm,
+ cu.email,
+ dbo.GET_CODE_NM_LANG('kr', 'COM_QUART', isnull(rslt.appr_unit_cd, 'QUAT1')) as appr_unit_nm, -- 진행단계
+ dbo.GET_CODE_NM_LANG('kr', 'COM_PLANT_CD', isnull(rslt.plant_cd, '')) as plant_nm -- 진행단계
+from 
+(
+-- 1분기
+select a1.plant_cd, a1.dept_cd, a1.year, isnull(b.appr_unit_cd,'QUAT1') as appr_unit_cd, isnull(b.create_user_id,a1.create_user_id) as  create_user_id
+   , perd_eday, t_day, chk_val, b.step_cd
+from
+(
+select a.plant_cd, a.dept_cd, a.year, create_user_id, a.year+'-03-31' as perd_eday , convert(VARCHAR(10), GETDATE() ,120) as t_day
+  , DATEDIFF(day, CONVERT(date,DATEADD(DAY, convert(int, #{day}), convert(date,a.year+'-03-31',23))), CONVERT(VARCHAR(10),getdate(), 120)) % #{day} as chk_val
+from mgt_tgt_dept_plan a
+where 1=1
+  and a.step_cd='PSCFM'   
+  and a.year in (
+   select case when month(getdate())&gt;=1 and month(getdate())&lt;=3 then year(getdate())-1
+     when month(getdate())&gt;=4 and month(getdate())&lt;=12 then year(getdate())
+     else year(getdate())
+   end )
+   
+) a1 left outer join mgt_tgt_dept_rslt b 
+       on a1.plant_cd=b.plant_cd and a1.dept_cd=b.dept_cd and a1.year=b.year and b.appr_unit_cd='QUAT1'
+where chk_val=0 and (b.step_cd='PSREG' or b.step_cd is null)
+union
+-- 2분기
+select a1.plant_cd, a1.dept_cd, a1.year, isnull(b.appr_unit_cd,'QUAT2') as appr_unit_cd, isnull(b.create_user_id,a1.create_user_id) as  create_user_id
+   , perd_eday, t_day, chk_val, b.step_cd
+from
+(
+select a.plant_cd, a.dept_cd, a.year, create_user_id, a.year+'-06-30' as perd_eday , convert(VARCHAR(10), GETDATE() ,120) as t_day
+  , DATEDIFF(day, CONVERT(date,DATEADD(DAY, convert(int, #{day}), convert(date,a.year+'-06-30',23))), CONVERT(VARCHAR(10),getdate(), 120)) % #{day} as chk_val
+from mgt_tgt_dept_plan a
+where 1=1
+  and a.step_cd='PSCFM'   
+  and a.year in (
+   select case when month(getdate())&gt;=1 and month(getdate())&lt;=3 then year(getdate())-1
+     when month(getdate())&gt;=4 and month(getdate())&lt;=12 then year(getdate())
+     else year(getdate())
+   end )
+   
+) a1 left outer join mgt_tgt_dept_rslt b 
+       on a1.plant_cd=b.plant_cd and a1.dept_cd=b.dept_cd and a1.year=b.year and b.appr_unit_cd='QUAT2'
+where chk_val=0 and (b.step_cd='PSREG' or b.step_cd is null)
+union
+-- 3분기
+select a1.plant_cd, a1.dept_cd, a1.year, isnull(b.appr_unit_cd,'QUAT3') as appr_unit_cd, isnull(b.create_user_id,a1.create_user_id) as  create_user_id
+   , perd_eday, t_day, chk_val, b.step_cd
+from
+(
+select a.plant_cd, a.dept_cd, a.year, create_user_id, a.year+'-09-30' as perd_eday , convert(VARCHAR(10), GETDATE() ,120) as t_day
+  , DATEDIFF(day, CONVERT(date,DATEADD(DAY, convert(int, #{day}), convert(date,a.year+'-09-30',23))), CONVERT(VARCHAR(10),getdate(), 120)) % #{day} as chk_val
+from mgt_tgt_dept_plan a
+where 1=1
+  and a.step_cd='PSCFM'   
+  and a.year in (
+   select case when month(getdate())&gt;=1 and month(getdate())&lt;=3 then year(getdate())-1
+     when month(getdate())&gt;=4 and month(getdate())&lt;=12 then year(getdate())
+     else year(getdate())
+   end )
+   
+) a1 left outer join mgt_tgt_dept_rslt b 
+       on a1.plant_cd=b.plant_cd and a1.dept_cd=b.dept_cd and a1.year=b.year and b.appr_unit_cd='QUAT3'
+where chk_val=0 and (b.step_cd='PSREG' or b.step_cd is null)
+
+union
+-- 4분기
+select a1.plant_cd, a1.dept_cd, a1.year, isnull(b.appr_unit_cd,'QUAT4') as appr_unit_cd, isnull(b.create_user_id,a1.create_user_id) as  create_user_id
+   , perd_eday, t_day, chk_val, b.step_cd
+from
+(
+select a.plant_cd, a.dept_cd, a.year, create_user_id, a.year+'-12-31' as perd_eday , convert(VARCHAR(10), GETDATE() ,120) as t_day
+  , DATEDIFF(day, CONVERT(date,DATEADD(DAY, convert(int, #{day}), convert(date,a.year+'-12-31',23))), CONVERT(VARCHAR(10),getdate(), 120)) % #{day} as chk_val
+from mgt_tgt_dept_plan a
+where 1=1
+  and a.step_cd='PSCFM'   
+  and a.year in (
+   select case when month(getdate())&gt;=1 and month(getdate())&lt;=3 then year(getdate())-1
+     when month(getdate())&gt;=4 and month(getdate())&lt;=12 then year(getdate())
+     else year(getdate())
+   end )
+   
+) a1 left outer join mgt_tgt_dept_rslt b 
+       on a1.plant_cd=b.plant_cd and a1.dept_cd=b.dept_cd and a1.year=b.year and b.appr_unit_cd='QUAT4'
+where chk_val=0 and (b.step_cd='PSREG' or b.step_cd is null)
+) rslt
+ left join com_user cu on cu.user_id = rslt.create_user_id
+ left join com_dept cd on cd.dept_cd = rslt.dept_cd
+ where 1=1 
+</select>
+
+  <select id="getMgtTgtList2" resultType="com.batch.utils.model.mgtTgtPlan">
+   /* MgtTgtMapper."getMgtTgtList2" [Mgt.xml] */
+ select rslt.year,
+ rslt.appr_unit_cd,
+ rslt.plant_cd,
+ rslt.create_user_id as user_id,
+ cd.dept_nm,
+ cu.user_nm,
+ cu.email,
+ dbo.GET_CODE_NM_LANG('kr', 'COM_QUART', isnull(rslt.appr_unit_cd, 'QUAT1')) as appr_unit_nm, -- 진행단계
+ dbo.GET_CODE_NM_LANG('kr', 'COM_PLANT_CD', isnull(rslt.plant_cd, '')) as plant_nm -- 진행단계
+from 
+(
+-- 1분기
+select a1.plant_cd, a1.year, isnull(b.appr_unit_cd,'QUAT1') as appr_unit_cd, isnull(b.create_user_id,a1.create_user_id) as  create_user_id
+   , perd_eday, t_day, chk_val
+from
+(
+select a.plant_cd, a.year, create_user_id, a.year+'-03-31' as perd_eday , convert(VARCHAR(10), GETDATE() ,120) as t_day
+  , DATEDIFF(day, CONVERT(date,DATEADD(DAY, convert(int, #{day}), convert(date,a.year+'-03-31',23))), CONVERT(VARCHAR(10),getdate(), 120)) % #{day} as chk_val
+from mgt_tgt_plant_plan a
+where 1=1
+  and a.plant_cd != 'AAAA' and a.step_cd='PSCFM'   
+  and a.year in (
+   select case when month(getdate())&gt;=1 and month(getdate())&lt;=3 then year(getdate())-1
+     when month(getdate())&gt;=4 and month(getdate())&lt;=12 then year(getdate())
+     else year(getdate())
+   end ) 
+) a1 left outer join mgt_tgt_plant_rslt b 
+       on a1.plant_cd=b.plant_cd and a1.year=b.year and b.appr_unit_cd='QUAT1'
+where chk_val=0 and (b.step_cd='PSREG' or b.step_cd is null)
+union
+-- 2분기
+select a1.plant_cd,a1.year, isnull(b.appr_unit_cd,'QUAT2') as appr_unit_cd, isnull(b.create_user_id,a1.create_user_id) as  create_user_id
+   , perd_eday, t_day, chk_val
+from
+(
+select a.plant_cd, a.year, create_user_id, a.year+'-06-30' as perd_eday , convert(VARCHAR(10), GETDATE() ,120) as t_day
+  , DATEDIFF(day, CONVERT(date,DATEADD(DAY, convert(int, #{day}), convert(date,a.year+'-06-30',23))), CONVERT(VARCHAR(10),getdate(), 120)) % #{day} as chk_val
+from mgt_tgt_plant_plan a
+where 1=1
+  and a.plant_cd != 'AAAA' and a.step_cd='PSCFM'   
+  and a.year in (
+   select case when month(getdate())&gt;=1 and month(getdate())&lt;=3 then year(getdate())-1
+     when month(getdate())&gt;=4 and month(getdate())&lt;=12 then year(getdate())
+     else year(getdate())
+   end ) 
+) a1 left outer join mgt_tgt_plant_rslt b 
+       on a1.plant_cd=b.plant_cd and a1.year=b.year and b.appr_unit_cd='QUAT2'
+where chk_val=0 and (b.step_cd='PSREG' or b.step_cd is null)
+union
+-- 3분기
+select a1.plant_cd, a1.year, isnull(b.appr_unit_cd,'QUAT3') as appr_unit_cd, isnull(b.create_user_id,a1.create_user_id) as  create_user_id
+   , perd_eday, t_day, chk_val
+from
+(
+select a.plant_cd, a.year, create_user_id, a.year+'-09-30' as perd_eday , convert(VARCHAR(10), GETDATE() ,120) as t_day
+  , DATEDIFF(day, CONVERT(date,DATEADD(DAY, convert(int, #{day}), convert(date,a.year+'-09-30',23))), CONVERT(VARCHAR(10),getdate(), 120)) % #{day} as chk_val
+from mgt_tgt_plant_plan a
+where 1=1
+  and a.plant_cd != 'AAAA' and a.step_cd='PSCFM'   
+  and a.year in (
+   select case when month(getdate())&gt;=1 and month(getdate())&lt;=3 then year(getdate())-1
+     when month(getdate())&gt;=4 and month(getdate())&lt;=12 then year(getdate())
+     else year(getdate())
+   end ) 
+) a1 left outer join mgt_tgt_plant_rslt b 
+       on a1.plant_cd=b.plant_cd and a1.year=b.year and b.appr_unit_cd='QUAT3'
+where chk_val=0 and (b.step_cd='PSREG' or b.step_cd is null)
+
+union
+-- 4분기
+select a1.plant_cd, a1.year, isnull(b.appr_unit_cd,'QUAT4') as appr_unit_cd, isnull(b.create_user_id,a1.create_user_id) as  create_user_id
+   , perd_eday, t_day, chk_val
+from
+(
+select a.plant_cd, a.year, create_user_id, a.year+'-12-31' as perd_eday , convert(VARCHAR(10), GETDATE() ,120) as t_day
+  , DATEDIFF(day, CONVERT(date,DATEADD(DAY, convert(int, #{day}), convert(date,a.year+'-12-31',23))), CONVERT(VARCHAR(10),getdate(), 120)) % #{day} as chk_val
+from mgt_tgt_plant_plan a
+where 1=1
+  and a.plant_cd != 'AAAA' and a.step_cd='PSCFM'   
+  and a.year in (
+   select case when month(getdate())&gt;=1 and month(getdate())&lt;=3 then year(getdate())-1
+     when month(getdate())&gt;=4 and month(getdate())&lt;=12 then year(getdate())
+     else year(getdate())
+   end ) 
+) a1 left outer join mgt_tgt_plant_rslt b 
+       on a1.plant_cd=b.plant_cd and a1.year=b.year and b.appr_unit_cd='QUAT4'
+where chk_val=0 and (b.step_cd='PSREG' or b.step_cd is null)
+) rslt
+left join com_user cu on cu.user_id = rslt.create_user_id
+ left join com_dept cd on cd.dept_cd = cu.dept_cd
+ where 1=1  
+</select>
+
+  <select id="getCommonUser" resultType="com.batch.utils.model.mgtTgtPlan">
+   /* MgtTgtMapper."getCommonUser" [Mgt.xml] */
+ select code
+ from com_code_master
+ where code_group_cd = 'COM_RPS_MAIL'
+  </select>
+</mapper>

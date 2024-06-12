@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>mail</title>
+    <style>
+        .div-link {
+            font-family: 굴림,Verdana;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 30px;
+        }
+
+        .div-link a {
+            width: 150px;
+            text-decoration: none;
+            background-color: #45237B;
+            text-align: center;
+            padding: 10px;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+<div style="width:100%; font-size:13px; font-family:'malgun gothic', Dotum, '돋움', Arial, serif; margin:20px auto; color:#292929;">
+    <div style="background:#f3f1f2; width:100%; padding:30px; padding-bottom:60px; box-sizing:border-box; font-family:'malgun gothic', Dotum, '돋움', Arial, serif ; border-top:solid 5px #45237B;">
+        <div style="font-size:13px; font-weight:normal; width:100%; padding:20px 0 0 0; box-sizing:border-box;">
+            <table style="width:100%;">
+                <tr>
+                    <td>
+                        <div style="font-size:24px; line-height: 1.4em;  font-weight:normal; color:#292929; margin:10px 10px 20px 0px;">
+                            <span style="color:#4472c4; font-weight:bold;">[$SUB_TITLE$]</span>
+                        </div>
+                    </td>
+                    <td align="right" valign="top" style="width:150px;">
+                        <img src="[$IMG_LINK$]" alt="">
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        [$MAIL_CONTENT$]
+
+        <div class="div-link">
+            <a href="[$MAIL_LINK$]" target="_blank" onclick="window.open(this.href, '_blank', 'width=1000, height=800, resizable=no, scrollbars=no'); return false;">
+                SHE 바로가기
+            </a>
+        </div>
+    </div>
+
+    <div style="background:#45237B; color:#fff; width:100%; box-sizing:border-box; padding:10px; font-family:'malgun gothic', Dotum, '돋움', Arial, serif; line-height:1.4em; padding:20px;">
+        <p style="padding:2px; margin:0px; width:auto; text-align:center;">© KG Steel All Righis Reserved.</p>
+    </div>
+</div>
+</body>
+</html>

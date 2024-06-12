@@ -1,0 +1,41 @@
+<?xml version= "1.0" encoding= "UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace= "com.batch.mapper.ImprMapper">
+    <select id="getImprArriveList" resultType="com.batch.utils.model.Impr">
+        select impr_title-- 조치요청제목
+             , impr_rqst_dept_cd-- 요청부서코드
+             , dbo.GET_DEPT_NM(impr_rqst_dept_cd) as impr_rqst_dept_nm -- 요청부서명
+             , impr_rqst_ymd-- 작성일(요청일)
+             , act_dept_cd-- 조치부서코드
+             , dbo.GET_DEPT_NM(act_dept_cd) as act_dept_nm-- 조치부서명
+             , act_user_id-- 조치담당자아이디
+             , dbo.GET_USER_NM(act_user_id) as act_user_nm -- 조치담당자명
+             , act_limit_ymd-- 조치일 
+        from saf_impr_act
+        where act_class_cd = 'ACL02' -- 즉시조치는 제외한 개선요청건만  
+          and impr_step_cd = 'IMST3' -- 검토대기중
+          and del_yn != 'Y'
+          and (act_confirm_ymd is null or act_confirm_ymd = '')
+          and act_limit_ymd = format(DATEADD("WEEK", 1, GETDATE()), 'yyyy-MM-dd') -- 일주일전(기한도래알림)
+    </select>
+    
+    <select id="getImprOverList" resultType="com.batch.utils.model.Impr">
+        select impr_title-- 조치요청제목
+             , impr_rqst_dept_cd-- 요청부서코드
+             , dbo.GET_DEPT_NM(impr_rqst_dept_cd) as impr_rqst_dept_nm -- 요청부서명
+             , impr_rqst_ymd-- 작성일(요청일)
+             , act_dept_cd-- 조치부서코드
+             , dbo.GET_DEPT_NM(act_dept_cd) as act_dept_nm-- 조치부서명
+             , act_user_id-- 조치담당자아이디
+             , dbo.GET_USER_NM(act_user_id) as act_user_nm -- 조치담당자명
+             , act_limit_ymd-- 조치일 
+        from saf_impr_act
+        where act_class_cd = 'ACL02' -- 즉시조치는 제외한 개선요청건만  
+          and impr_step_cd = 'IMST3' -- 검토대기중
+          and del_yn != 'Y'
+          and (act_confirm_ymd is null or act_confirm_ymd = '')
+          and 0 = DATEDIFF(day, CONVERT(date,act_limit_ymd), CONVERT(CHAR(10),getdate(), 23)) % 7 
+          and act_limit_ymd <![CDATA[< ]]> convert(char(10),getDate(),23)
+    </select>
+</mapper>

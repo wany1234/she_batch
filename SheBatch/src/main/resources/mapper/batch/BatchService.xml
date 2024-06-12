@@ -1,0 +1,33 @@
+<?xml version= "1.0" encoding= "UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace= "com.batch.mapper.BatchServiceMapper">
+    
+    <select id="getBatchServices" resultType= "com.batch.utils.model.BatchService">
+        select t.batch_cd, t.batch_nm, t.batch_desc, t.cycle_start_ymd
+            , t.cycle_day_cd, case t.cycle_day_cd when 'S' then '고정일' else '반복일' end as cycle_day_nm, t.cycle_day
+            , t.cycle_hm_cd, case t.cycle_hm_cd when 'S' then '고정시분(HHmm)' else '반복분' end as cycle_hm_nm, t.cycle_hm
+            , t.use_yn, case t.use_yn when 'Y' then '사용' else '미사용' end as use_yn_nm
+            , t.create_user_id, format(t.create_dt, 'yyyy-MM-dd') as create_dt
+            , t.update_user_id, format(t.update_dt, 'yyyy-MM-dd') as update_dt
+            , t.batch_day
+        from com_batch_service t
+        where t.use_yn = 'Y'
+    </select>
+    
+    <insert id="insertBatchLog" parameterType="com.batch.utils.model.BatchLog">
+        insert into com_batch_log (
+            batch_cd
+            , run_dt
+            , run_result
+            , remark
+        )
+        values (
+            #{batchCd}
+            , getdate()
+            , #{runResult}
+            , #{remark}
+        )
+    </insert>
+    
+</mapper>

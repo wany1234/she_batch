@@ -1,0 +1,166 @@
+<?xml version= "1.0" encoding= "UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace= "com.batch.mapper.CommonMapper">
+
+    <!-- ######## 유저정보 Start ######## -->
+
+    <!-- 유저목록 -->
+    <select id= "getUsers" resultType= "com.batch.utils.model.User">
+        /* CommonMapper.getUsers [Common.xml] */
+        with depttree as (
+        select cd.dept_cd
+        ,cd.dept_nm
+        ,cd.p_dept_cd
+        ,cd.plant_cd
+        from com_dept cd
+        where 1=1
+        <choose>
+            <when test= "deptCd != null and !deptCd.equals('')">
+                and cd.dept_cd = #{deptCd}
+            </when>
+        </choose>
+        <if test= 'deptCd != null and !deptCd.equals("") and deptSubYn != null and !deptSubYn.equals("N")'>
+            union all
+            select cdd.dept_cd
+            ,cdd.dept_nm
+            ,cdd.p_dept_cd
+            ,cdd.plant_cd
+            from com_dept cdd
+            inner join depttree
+            on cdd.p_dept_cd = depttree.dept_cd
+        </if>
+        )
+        select  u.user_id
+                , u.user_nm
+                , d.dept_cd
+                , d.dept_nm
+                , u.office_tel
+                , u.phone_no
+                , u.email
+                , u.use_yn
+                , u.create_user_id, cu.user_nm as create_user_nm, u.create_dt
+                , u.update_user_id, uu.user_nm as update_user_nm, u.update_dt
+                , dhr.plant_cd
+                , u.dept_cd_hr
+                , dhr.dept_nm as dept_nm_hr
+        from com_user u
+        inner join depttree dhr on u.dept_cd_hr = dhr.dept_cd
+        inner join com_dept d on u.dept_cd = d.dept_cd
+        left outer join dbo.LANG_CODE_MASTER('kr', 'COM_PLANT_CD') plant
+        where 1=1
+        <if test= "plantCd != null and !plantCd.equals('')">
+            and dhr.plant_cd = #{plantCd}
+        </if>
+        <if test= "useYn != null and !useYn.equals('')">
+            and u.use_yn = #{useYn}
+        </if>
+        order by plant.sort_order, dhr.dept_nm, u.user_nm
+    </select>
+
+    <!-- 유저정보 -->
+    <select id= "getUser" resultType= "com.batch.utils.model.User">
+        /* CommonMapper.getUser [Common.xml] */
+        select  u.user_id
+                , u.user_nm
+                , d.dept_cd
+                , d.dept_nm
+                , u.office_tel
+                , u.phone_no
+                , u.email
+                , u.use_yn
+                , dhr.plant_cd
+                , u.dept_cd_hr
+                , dhr.dept_nm as dept_nm_hr
+        from com_user u
+        inner join com_dept d
+        on u.dept_cd = d.dept_cd
+        inner join com_dept dhr
+        on u.dept_cd_hr = dhr.dept_cd
+        left outer join com_code_master plant
+        on d.plant_cd = plant.code
+        and plant.code_group_cd = 'COM_PLANT_CD'
+        where 1 = 1
+        and u.user_id = #{userId}
+    </select>
+
+    <!-- ######## 유저정보 End ######## -->
+
+    <!-- ######## 로그 Start ######## -->
+
+    <!-- 메일로그 등록 -->
+    <insert id="createMailLog" parameterType="com.batch.utils.model.MailLog">
+        /* CommonMapper.createMailLog [Common.xml] */
+        <selectKey keyProperty="logNo" resultType="int" order="BEFORE">
+            select next value for seq_com_mail_log as log_no
+        </selectKey>
+        insert into com_mail_log (
+            log_no
+            ,sender_id
+            ,sender_email
+            ,receiver_id
+            ,receiver_email
+            ,title
+            ,send_dt
+            ,send_yn
+            ,try_count
+            ,content
+            ,alarm_no
+            ,sender_nm
+            ,receiver_nm
+            ,html_yn
+            ,req_dt
+        )
+        values (
+            #{logNo}
+            ,#{senderId}
+            ,#{senderEmail}
+            ,#{receiverId}
+            ,#{receiverEmail}
+            ,#{title}
+            ,getDate()
+            ,#{sendYn}
+            ,#{tryCount}
+            ,#{content}
+            ,#{alarmNo}
+            ,#{senderNm}
+            ,#{receiverNm}
+            ,#{htmlYn}
+            ,getDate()
+        )
+    </insert>
+
+    <!-- 메일로그 수정 -->
+    <update id="updateMailLog" parameterType="com.batch.utils.model.MailLog">
+        /* CommonMapper.updateMailLog [Common.xml] */
+        UPDATE com_mail_log
+        SET send_dt = getdate()
+            ,send_yn = #{sendYn}
+            ,fail_desc = #{failDesc}
+            ,try_count = iif(isnull(try_count, 0) = 0, 1, try_count + 1)
+            ,try_dt = getdate()
+        WHERE log_no = #{logNo}
+    </update>
+
+    <select id="getFailMails" resultType="com.batch.utils.model.MailLog">
+        /* CommonMapper.getFailMails [Common.xml] */
+        select	log_no -- 로그번호
+                ,sender_email -- 발신자 이메일
+                ,receiver_email -- 수신자 이메일
+                ,title -- 메일제목
+                ,content -- 메일 본문
+        from com_mail_log
+        where send_yn = 'N' -- 발송실패한 메일만 조회
+    </select>
+
+    <!-- ######## 로그 End ######## -->
+
+    <!-- 추후 배치서비스에서 필요한 모든 공통 쿼리(유저정보, 부서정보 등)는 여기에 작성하세요. -->
+      <select id="getCommonUser" resultType="com.batch.utils.model.CommonUser">
+   /* CommonMapper.getCommonUser [Common.xml] 시스템 공통 이메일 주소 조회 */
+ select code
+ from com_code_master
+ where code_group_cd = 'COM_RPS_MAIL'
+  </select>
+
+</mapper>

@@ -1,0 +1,101 @@
+<?xml version= "1.0" encoding= "UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace= "com.batch.mapper.AlarmMapper">
+    <!-- 알람배치 정보 조회(배치코드별) -->
+    <select id= "getAlarmInfo" resultType= "com.batch.utils.model.Alarm">
+        /* AlarmMapper.getAlarmInfo[Alarm.xml] */
+        select	cbs.batch_cd
+                ,cbs.batch_day
+                ,cbs.batch_nm
+                ,cbs.batch_desc
+                ,cbs.alarm_no
+                ,ca.alarm_cd
+                ,ca.alarm_nm
+                ,ca.alarm_desk
+                ,ca.alarm_text
+                ,ca.use_yn
+                ,ca.mail_yn
+                ,ca.mail_url
+                ,ca.template_url
+        from com_batch_service cbs
+        left outer join com_alarm ca
+        on ca.alarm_no = cbs.alarm_no
+        where cbs.batch_cd = #{batchCd}
+        and ca.use_yn = 'Y'
+    </select>
+
+    <!-- 공정안전문서 차기점검일도래일 목록 (오늘날짜 -7일) -->
+    <select id="getNextCheckPsmDocuList" resultType="HashMap">
+        /* AlarmMapper.getNextCheckPsmDocuList[Alarm.xml] */
+        select	dbo.GET_CODE_NM_LANG('kr', 'SAF_PSM_CAT_CLS', spd.category_cd) as categoryNm -- 문서구분
+                ,dbo.GET_CODE_NM_LANG('kr', 'SAF_PSM_SUB_CAT_CLS', spd.sub_category_cd) as subCategoryNm -- Category
+                ,spd.docu_title as docuTitle -- 문서명
+                ,dbo.GET_DEPT_NM(spd.dept_cd) as deptNm -- 담당부서
+                ,convert(char(10), spd.next_check_dt, 23) as nextCheckDt -- 차기검토일
+                ,spd.act_mgr_id as actMgrId -- 조치담당자
+        from saf_psm_docu spd
+        where next_check_dt = convert(char(10), DATEADD(DD, -1 * #{batchDay}, getdate()), 23)
+    </select>
+
+    <!-- 추후 알람에 필요한 모든 쿼리는 여기에 작성하세요. -->
+<!-- 알람코드로 알람정보 조회 (list 조회되어도 상관없음) -->
+    <select id="getAlarmByAlarmCd" resultType="com.batch.utils.model.Alarm">
+        /* AlarmMapper.getAlarmByAlarmCd [Alarm.xml] */
+        SELECT  a.alarm_no
+                ,a.alarm_nm
+                ,a.alarm_type
+                ,a.sms_yn
+                ,a.mail_yn
+                ,a.alarm_desk
+                ,a.alarm_text
+                ,a.use_yn
+                ,a.create_user_id
+                ,a.create_dt
+                ,a.update_user_id
+                ,a.update_dt
+                ,a.alarm_cd
+                ,a.mail_url
+                ,a.template_url
+        FROM com_alarm a
+        WHERE a.alarm_cd = #{alarmCd}
+    </select>
+    
+        <select id= "getUser" resultType= "com.batch.utils.model.User">
+        /* UserMapper.getUser [User.xml] */
+        select u.user_id, u.user_pwd_SHA, u.user_nm, d.dept_cd, d.dept_nm
+            , u.com_sex_type_cd, case when u.com_sex_type_cd = '1' then '남자' else '여자' end as com_sex_type_nm
+            , u.office_tel, u.phone_no, u.email, u.birth_ymd, u.entry_ymd
+            , u.use_yn, u.login_id
+            , u.create_user_id, cu.user_nm as create_user_nm, u.create_dt
+            , u.update_user_id, uu.user_nm as update_user_nm, u.update_dt
+            , d.plant_cd , plant.code_nm as plant_nm
+            , u.duty_cd, duty.duty_nm
+            , u.position_cd, position.position_nm
+            , u.signature
+            , u.dept_cd_hr, dhr.dept_nm as dept_nm_hr
+            , u.retire_ymd
+            , u.user_pwd_init_yn
+            , u.job_cd, job.job_nm
+        from com_user u
+        inner join com_dept d
+        on u.dept_cd = d.dept_cd
+        inner join com_dept dhr
+        on u.dept_cd_hr = dhr.dept_cd
+        left outer join com_code_master plant
+        on d.plant_cd = plant.code
+        and plant.code_group_cd = 'COM_PLANT_CD'
+        left outer join com_hr_position position
+        on u.position_cd = position.position_cd
+        left outer join com_hr_duty duty
+        on u.duty_cd = duty.duty_cd
+        left outer join com_hr_job job
+        on u.job_cd = job.job_cd
+        left outer join com_user cu
+        on u.create_user_id = cu.user_id
+        left outer join com_user uu
+        on u.update_user_id = uu.user_id
+        where 1 = 1
+        and u.user_id = #{userId}
+    </select>
+</mapper>

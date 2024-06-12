@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.batch.mapper.LogListMapper">
+
+ 
+    <insert id="createMailLog" parameterType="com.batch.utils.model.MailLog">
+        /* LogListMapper.createMailLog [LogList.xml] */
+        <selectKey keyProperty="logNo" resultType="int" order="BEFORE">
+            select next value for seq_com_mail_log as log_no
+        </selectKey>
+        insert into com_mail_log (
+            log_no
+            ,sender_id
+            ,sender_email
+            ,receiver_id
+            ,receiver_email
+            ,title
+            ,send_dt
+            ,send_yn
+            ,try_count
+            ,content
+            ,alarm_no
+            ,sender_nm
+            ,receiver_nm
+            ,html_yn
+            ,req_dt
+        )
+        values (
+            #{logNo}
+            ,#{senderId}
+            ,#{senderEmail}
+            ,#{receiverId}
+            ,#{receiverEmail}
+            ,#{title}
+            ,getDate()
+            ,#{sendYn}
+            ,#{tryCount}
+            ,#{content}
+            ,#{alarmNo}
+            ,#{senderNm}
+            ,#{receiverNm}
+            ,#{htmlYn}
+            ,getDate()
+        )
+    </insert>
+
+ 
+
+</mapper>

@@ -1,0 +1,1275 @@
+<?xml version= "1.0" encoding= "UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace= "com.batch.mapper.SapDataMapper">
+    
+    <!-- SAP 거래처 정보 등록/수정 -->
+    <update id="mergeSapVendorData" parameterType="map">
+        /* SapDataMapper.mergeSapVendorData [SapData.xml] */
+        merge into com_vendor_mst as a
+              using ( select #{LIFNR} as vendor_cd ) as b
+                 on a.vendor_cd = b.vendor_cd
+               when matched then
+                    update set   vendor_nm = #{NAME1}
+                               , origin_cd = #{LAND1}
+                               , charger_nm = #{J_1KFREPRE}
+                               , vendor_tel = #{TELF1}
+                               , vendor_fax = #{TELFX}
+                               , vendor_addr = #{ORT01} + ' ' + #{STRAS}
+                               , update_user_id = 'system'
+                               , update_dt = getdate()
+               when not matched then
+                    insert (
+                              vendor_cd
+                            , biz_num
+                            , portal_id
+                            , portal_pwd
+                            , vendor_nm
+                            , origin_cd
+                            , charger_nm
+                            , vendor_tel
+                            , vendor_fax
+                            , vendor_addr
+                            , create_user_id
+                            , create_dt
+                            , use_yn
+                           )
+                           values
+                           (
+                              #{LIFNR}
+                            , #{LIFNR}
+                            , #{LIFNR}
+                            , #{SHA256}
+                            , #{NAME1}
+                            , #{LAND1}
+                            , #{J_1KFREPRE}
+                            , #{TELF1}
+                            , #{TELFX}
+                            , #{ORT01} + ' ' + #{STRAS}
+                            , 'system'
+                            , getdate()
+                            , 'Y'
+                           );
+    </update>
+    
+    <!-- SAP 자재마스터 정보 등록/수정 -->
+    <update id="mergeSapMatData" parameterType="map">
+        /* SapDataMapper.mergeSapMatData [SapData.xml] */
+        merge into sap_mat as a
+              using (select #{MATNR} as mat_code) as b
+                 on a.mat_code = b.mat_code
+               when matched then
+                    update set   mat_name = #{MAKTX}
+                               , mat_name_eng = #{MAKTG}
+        <choose>
+            <when test="@org.apache.commons.lang.StringUtils@equals(LVORM, 'X')">
+                               , use_yn = 'N'
+            </when>
+            <otherwise>
+                               , use_yn = 'Y'
+            </otherwise>
+        </choose>
+                               , mat_group_cd = #{MATKL}
+                               , mat_type = #{MTART}
+                               , pack_unit = #{MEINS}
+                               , update_dt = getdate()
+               when not matched then
+                    insert (
+                              mat_code
+                            , mat_name
+                            , mat_name_eng
+                            , use_yn
+                            , mat_group_cd
+                            , mat_type
+                            , pack_unit
+                            , create_dt
+                           )
+                           values
+                           (
+                              #{MATNR}
+                            , #{MAKTX}
+                            , #{MAKTG}
+                    <choose>
+                        <when test="@org.apache.commons.lang.StringUtils@equals(LVORM, 'X')">
+                            , 'N'
+                        </when>
+                        <otherwise>
+                            , 'Y'
+                        </otherwise>
+                    </choose>
+                            , #{MATKL}
+                            , #{MTART}
+                            , #{MEINS}
+                            , getdate()
+                           );
+    </update>
+    
+    <!-- SAP 화학물질식적 월 정보 삭제 -->
+    <delete id="deleteSapMatInoutData">
+        /* SapDataMapper.deleteSapMatInoutData [SapData.xml] */
+        delete from sap_mat_inout
+         where yearmon = #{yearmon}
+    </delete>
+    
+    <!-- SAP 화학물질식적 월 정보 등록 -->
+    <insert id="insertSapMatInoutData" parameterType="map">
+        /* SapDataMapper.insertSapMatInoutData [SapData.xml] */
+        insert into sap_mat_inout
+               (
+                  yearmon
+                , plant_cd
+                , mat_code
+                , mat_strg_cd
+                , in_amt
+                , out_amt
+                , stoc_amt
+                , unit
+                , unit_cost
+                , stoc_sum_money
+                , money_unit
+                , create_dt
+               )
+               values
+               (
+                  #{SPMON}
+                , #{WERKS}
+                , #{MATNR}
+                , #{LGORT}
+                , #{MZUBB}
+                , #{MAGBB}
+                , #{LABST}
+                , #{MEINS}
+                , #{STPRS}
+                , #{SALK3}
+                , #{WAERS}
+                , getdate()
+               )
+    </insert>
+    
+    <!-- SAP 화학물질식적 일 정보 등록 -->
+    <update id="mergeSapMatStrgStocData" parameterType="map">
+        /* SapDataMapper.mergeSapMatStrgStocData [SapData.xml] */
+        merge into sap_mat_strg_stoc as a
+              using (
+                     select   #{WERKS} as plant_cd
+                            , #{LGORT} as mat_strg_cd
+                            , #{MATNR} as mat_code
+                    ) as b
+                 on a.plant_cd = b.plant_cd
+                and a.mat_strg_cd = b.mat_strg_cd
+                and a.mat_code = b.mat_code
+               when matched then
+                    update set   stoc_amt = #{LABST}
+                               , unit = #{MEINS}
+                               , unit_cost = #{STPRS}
+                               , stoc_sum_money = #{SALK3}
+                               , money_unit = #{WAERS}
+                               , update_dt = getdate()
+               when not matched then
+                    insert (
+                              plant_cd
+                            , mat_strg_cd
+                            , mat_code
+                            , stoc_amt
+                            , unit
+                            , unit_cost
+                            , stoc_sum_money
+                            , money_unit
+                            , create_dt
+                           )
+                           values
+                           (
+                              #{WERKS}
+                            , #{LGORT}
+                            , #{MATNR}
+                            , #{LABST}
+                            , #{MEINS}
+                            , #{STPRS}
+                            , #{SALK3}
+                            , #{WAERS}
+                            , getdate()
+                           );
+    </update>
+    
+    <!-- SAP 근태정보 등록 -->
+    <update id="mergeSapWorkInfoData" parameterType="map">
+        /* SapDataMapper.mergeSapWorkInfoData [SapData.xml] */
+        merge into sap_work_info as a
+              using (
+                     select   #{BUKRS} as branch_cd
+                            , #{WERKS} as plant_cd
+                            , #{ZYYMM} as yearmon
+                            , #{ZDPTCD} as dept_cd
+                    ) as b
+                 on a.branch_cd = b.branch_cd
+                and a.plant_cd = b.plant_cd
+                and a.yearmon = b.yearmon
+                and a.dept_cd = b.dept_cd
+               when matched then
+                    update set   dept_nm = #{ZDPTNM}
+                               , resp_nm = #{ZSECNM}
+                               , work_hour = #{ZWKHR}
+                               , hr_dept_cd = #{ORGCD}
+                               , update_dt = getdate()
+               when not matched then
+                    insert (
+                              branch_cd
+                            , plant_cd
+                            , yearmon
+                            , dept_cd
+                            , dept_nm
+                            , resp_nm
+                            , work_hour
+                            , hr_dept_cd
+                            , create_dt
+                           )
+                           values
+                           (
+                              #{BUKRS}
+                            , #{WERKS}
+                            , #{ZYYMM}
+                            , #{ZDPTCD}
+                            , #{ZDPTNM}
+                            , #{ZSECNM}
+                            , #{ZWKHR}
+                            , #{ORGCD}
+                            , getdate()
+                           );
+    </update>
+    
+    <!-- SAP 부서월별 무재해정보 등록 -->
+    <update id="mergeSapNacdInfoData" parameterType="map">
+        /* SapDataMapper.mergeSapNacdInfoData [SapData.xml] */
+        merge into sap_nacd_info as a
+              using (
+                     select   #{BUKRS} as branch_cd
+                            , #{WERKS} as plant_cd
+                            , #{ZWKDT} as work_dt
+                            , #{ORGCD} as dept_cd
+                    ) as b
+                 on a.branch_cd = b.branch_cd
+                and a.plant_cd = b.plant_cd
+                and a.work_dt = b.work_dt
+                and a.dept_cd = b.dept_cd
+               when matched then
+                    update set   dept_nm = #{ZDPTNM}
+                               , resp_nm = #{ZSECNM}
+                               , work_day = #{PDAY}
+                               , dept_cnt = #{ZTOTPN}
+                               , work_cnt = #{ZJOBPN}
+                               , update_dt = getdate()
+               when not matched then
+                    insert (
+                              branch_cd
+                            , plant_cd
+                            , work_dt
+                            , dept_cd
+                            , dept_nm
+                            , resp_nm
+                            , work_day
+                            , dept_cnt
+                            , work_cnt
+                            , create_dt
+                           )
+                           values
+                           (
+                              #{BUKRS}
+                            , #{WERKS}
+                            , #{ZWKDT}
+                            , #{ORGCD}
+                            , #{ZDPTNM}
+                            , #{ZSECNM}
+                            , #{PDAY}
+                            , #{ZTOTPN}
+                            , #{ZJOBPN}
+                            , getdate()
+                           );
+    </update>
+    
+    <!-- SAP 입고시설(저장시설) 등록 -->
+    <update id="mergeSapMatStrgData" parameterType="map">
+        /* SapDataMapper.mergeSapMatStrgData [SapData.xml] */
+        merge into sap_mat_strg as a
+              using ( select #{LGORT} as mat_strg_cd ) as b
+                 on a.mat_strg_cd = b.mat_strg_cd
+               when matched then
+                    update set   mat_strg_nm = #{LGOBE}
+                               , plant_cd = #{WERKS}
+                               , update_dt = getdate()
+               when not matched then
+                    insert (
+                              mat_strg_cd
+                            , mat_strg_nm
+                            , plant_cd
+                            , create_dt
+                           )
+                           values
+                           (
+                              #{LGORT}
+                            , #{LGOBE}
+                            , #{WERKS}
+                            , getdate()
+                           );
+    </update>
+    
+    <!-- SAP 용수량 등록 -->
+    <update id="mergeSapWtrDayInfoData" parameterType="map">
+        /* SapDataMapper.mergeSapWtrDayInfoData [SapData.xml] */
+        merge into sap_wtr_day_info as a
+              using (
+                     select   #{WERKS} as plant_cd
+                            , #{ZMDATE} as work_dt
+                            , #{ZWCODE} as fac_cd
+                            , #{ZITEMNM} as itm_nm
+                    ) as b
+                 on a.plant_cd = b.plant_cd
+                and a.work_dt = b.work_dt
+                and a.fac_cd = b.fac_cd
+                and a.itm_nm = b.itm_nm
+               when matched then
+                    update set   fac_nm = #{ZWCODENM}
+                               , itm_cd = #{ZITEM}
+                               , meter_cnt_t = #{ZOTESW}
+                               , consum_amt = #{ZOTEDW}
+                               , update_dt = getdate()
+               when not matched then
+                    insert (
+                              plant_cd
+                            , work_dt
+                            , fac_cd
+                            , fac_nm
+                            , itm_cd
+                            , itm_nm
+                            , meter_cnt_t
+                            , consum_amt
+                            , create_dt
+                           )
+                           values
+                           (
+                              #{WERKS}
+                            , #{ZMDATE}
+                            , #{ZWCODE}
+                            , #{ZWCODENM}
+                            , #{ZITEM}
+                            , #{ZITEMNM}
+                            , #{ZOTESW}
+                            , #{ZOTEDW}
+                            , getdate()
+                           );
+    </update>
+    
+    <!-- SAP 자재검토요청 등록 -->
+    <update id="mergeSapMatChkRqstData" parameterType="map">
+        /* SapDataMapper.mergeSapMatChkRqstData [SapData.xml] */
+        merge into sap_mat_chk_rqst as a
+              using (
+                     select   #{BUKRS} as branch_cd
+                            , #{RQNUM} as rqst_no
+                            , #{RQITM} as rqst_itm_no
+                    ) as b
+                 on a.branch_cd = b.branch_cd
+                and a.rqst_no = b.rqst_no
+                and a.rqst_itm_no = b.rqst_itm_no
+               when matched then
+                    update set   rqst_dt = #{ERSDA}
+                               , rqst_user_id = #{USRNB}
+                               , dept_cd = #{DEPRT}
+                               , tel = #{TELNO}
+                               , mat_reg_dt = #{AEDAT}
+                               , mat_reg_id = #{USNAM}
+                               , mat_code = #{MATNR}
+                               , mat_type = #{MTART}
+                               , plant_cd = #{WERKS}
+                               , mat_desc = #{MAKTX}
+                               , unit = #{MEINS}
+                               , mat_grp = #{MATKL}
+                               , toxic = #{TOXIC}
+                               , buy_type = #{BYCHK}
+                               , buy_type_nm = #{BYNAM}
+                               , msds_file_nm = #{MSDS}
+                               , bds_code = #{BDSNM}
+                               , msds_i = #{MSDSI}
+                               , msds_c = #{MSDSC}
+                               , reason = #{ZREASON}
+                               , spec_file_nm = #{SPEC}
+                               , spec_code = #{SPECCODE}
+                               , chem_code = #{CDVAL}
+                               , update_dt = getdate()
+               when not matched then
+                    insert (
+                              branch_cd
+                            , rqst_no
+                            , rqst_itm_no
+                            , rqst_dt
+                            , rqst_user_id
+                            , dept_cd
+                            , tel
+                            , mat_reg_dt
+                            , mat_reg_id
+                            , mat_code
+                            , mat_type
+                            , plant_cd
+                            , mat_desc
+                            , unit
+                            , mat_grp
+                            , toxic
+                            , buy_type
+                            , buy_type_nm
+                            , msds_file_nm
+                            , bds_code
+                            , msds_i
+                            , msds_c
+                            , reason
+                            , spec_file_nm
+                            , spec_code
+                            , chem_code
+                            , create_dt
+                           )
+                           values
+                           (
+                              #{BUKRS}
+                            , #{RQNUM}
+                            , #{RQITM}
+                            , #{ERSDA}
+                            , #{USRNB}
+                            , #{DEPRT}
+                            , #{TELNO}
+                            , #{AEDAT}
+                            , #{USNAM}
+                            , #{MATNR}
+                            , #{MTART}
+                            , #{WERKS}
+                            , #{MAKTX}
+                            , #{MEINS}
+                            , #{MATKL}
+                            , #{TOXIC}
+                            , #{BYCHK}
+                            , #{BYNAM}
+                            , #{MSDS}
+                            , #{BDSNM}
+                            , #{MSDSI}
+                            , #{MSDSC}
+                            , #{ZREASON}
+                            , #{SPEC}
+                            , #{SPECCODE}
+                            , #{CDVAL}
+                            , getdate()
+                           );
+    </update>
+    
+    <!-- SAP 수질분석결과 등록 -->
+    <update id="mergeSapWtrMeasInfoData" parameterType="map">
+        /* SapDataMapper.mergeSapWtrMeasInfoData [SapData.xml] */
+        merge into sap_wtr_meas_info a
+              using (
+                     select   #{WERKS} as plant_cd
+                            , #{ZMDATE} as work_dt
+                            , #{ZWCODE} as fac_cd
+                            , #{ZITEMCODE} as pnt_cd_nm
+                            , #{ZITEM} as itm_cd
+                    ) as b
+                 on a.plant_cd = b.plant_cd
+                and a.work_dt = b.work_dt
+                and a.fac_cd = b.fac_cd
+                and a.pnt_cd_nm = b.pnt_cd_nm
+                and a.itm_cd = b.itm_cd
+               when matched then
+                    update set   fac_nm = #{ZWCODENM}
+                               , itm_nm = #{ZITEMNM}
+                               , itm_val = #{ZANLVL}
+                               , update_dt = getdate()
+               when not matched then
+                    insert (
+                              plant_cd
+                            , work_dt
+                            , fac_cd
+                            , fac_nm
+                            , pnt_cd_nm
+                            , itm_cd
+                            , itm_nm
+                            , itm_val
+                            , create_dt
+                           )
+                           values
+                           (
+                              #{WERKS}
+                            , #{ZMDATE}
+                            , #{ZWCODE}
+                            , #{ZWCODENM}
+                            , #{ZITEMCODE}
+                            , #{ZITEM}
+                            , #{ZITEMNM}
+                            , #{ZANLVL}
+                            , getdate()
+                           );
+    </update>
+    
+    <!-- SAP 대기방지시설 등록 -->
+    <update id="mergeSapEairInfoData" parameterType="map">
+        /* SapDataMapper.mergeSapEairInfoData [SapData.xml] */
+        merge into sap_eair_info a
+              using (
+                     select   #{WERKS} as plant_cd
+                            , #{ZMDATE} as work_dt
+                            , #{ZEMTNO} as outlet_num
+                            , #{ZEQUIP} as disch_fac_cd
+                    ) as b
+                 on a.plant_cd = b.plant_cd
+                and a.work_dt = b.work_dt
+                and a.outlet_num = b.outlet_num
+                and a.disch_fac_cd = b.disch_fac_cd
+               when matched then
+                    update set   disch_fac_nm = #{ZEMTNM}
+                               , disch_fac_spec = #{ZSIZE}
+                               , work_tm = #{ZJOMIN}
+                               , prevent_fac_nm = #{ZCTRNME}
+                               , install_pos = #{ZPLACE}
+                               , elec_pwr_qty = #{ZDPWR}
+                               , dispo_cap = #{ZPRWGT}
+                               , eair_pollu = #{ZPOLMT}
+                               , dispo_eff = #{ZPREFF}
+                               , position_nm = #{JIKNM}
+                               , user_nm = #{NAME}
+                               , sap_id = #{ZSAPID}
+                               , update_dt = getdate()
+               when not matched then
+                    insert (
+                              plant_cd
+                            , work_dt
+                            , outlet_num
+                            , disch_fac_cd
+                            , disch_fac_nm
+                            , disch_fac_spec
+                            , work_tm
+                            , prevent_fac_nm
+                            , install_pos
+                            , elec_pwr_qty
+                            , dispo_cap
+                            , eair_pollu
+                            , dispo_eff
+                            , position_nm
+                            , user_nm
+                            , sap_id
+                            , create_dt
+                           )
+                           values
+                           (
+                              #{WERKS}
+                            , #{ZMDATE}
+                            , #{ZEMTNO}
+                            , #{ZEQUIP}
+                            , #{ZEMTNM}
+                            , #{ZSIZE}
+                            , #{ZJOMIN}
+                            , #{ZCTRNME}
+                            , #{ZPLACE}
+                            , #{ZDPWR}
+                            , #{ZPRWGT}
+                            , #{ZPOLMT}
+                            , #{ZPREFF}
+                            , #{JIKNM}
+                            , #{NAME}
+                            , #{ZSAPID}
+                            , getdate()
+                           );
+    </update>
+    
+    <!-- SAP 폐수처리시설 관리(Main)  -->
+    <update id="mergeSapWtrLog400Data" parameterType="map">
+        /* SapDataMapper.mergeSapWtrLog400Data [SapData.xml] */
+        merge into sap_wtr_log_400 a
+              using (
+                     select   #{MANDT} as mandt
+                            , #{BUKRS} as branch_cd
+                            , #{WERKS} as plant_cd
+                            , convert(char(8), convert(datetime, #{ZKDATE}), 112) as ymd
+                    ) as b
+                 on a.mandt = b.mandt
+                and a.branch_cd = b.branch_cd
+                and a.plant_cd = b.plant_cd
+                and a.ymd = b.ymd
+               when matched then
+                    update set   zsttm1 = #{ZSTTM1}
+                               , zendtm1 = #{ZENDTM1}
+                               , zempnm11 = #{ZEMPNM11}
+                               , zsttm2 = #{ZSTTM2}
+                               , zendtm2 = #{ZENDTM2}
+                               , zempnm21 = #{ZEMPNM21}
+                               , zsttm3 = #{ZSTTM3}
+                               , zendtm3 = #{ZENDTM3}
+                               , zempnm31 = #{ZEMPNM31}
+                               , zsttm11 = #{ZSTTM11}
+                               , zendtm11 = #{ZENDTM11}
+                               , zempnm12 = #{ZEMPNM12}
+                               , zsttm22 = #{ZSTTM22}
+                               , zendtm22 = #{ZENDTM22}
+                               , zempnm22 = #{ZEMPNM22}
+                               , zsttm33 = #{ZSTTM33}
+                               , zendtm33 = #{ZENDTM33}
+                               , zempnm32 = #{ZEMPNM32}
+                               , zwth = #{ZWTH}
+                               , ztemper = #{ZTEMPER}
+                               , update_dt = getdate()
+               when not matched then
+                    insert (
+                              mandt
+                            , branch_cd
+                            , plant_cd
+                            , ymd
+                            , zsttm1
+                            , zendtm1
+                            , zempnm11
+                            , zsttm2
+                            , zendtm2
+                            , zempnm21
+                            , zsttm3
+                            , zendtm3
+                            , zempnm31
+                            , zsttm11
+                            , zendtm11
+                            , zempnm12
+                            , zsttm22
+                            , zendtm22
+                            , zempnm22
+                            , zsttm33
+                            , zendtm33
+                            , zempnm32
+                            , zwth
+                            , ztemper
+                            , create_dt
+                           )
+                           values
+                           (
+                              #{MANDT}
+                            , #{BUKRS}
+                            , #{WERKS}
+                            , convert(char(8), convert(datetime, #{ZKDATE}), 112)
+                            , #{ZSTTM1}
+                            , #{ZENDTM1}
+                            , #{ZEMPNM11}
+                            , #{ZSTTM2}
+                            , #{ZENDTM2}
+                            , #{ZEMPNM21}
+                            , #{ZSTTM3}
+                            , #{ZENDTM3}
+                            , #{ZEMPNM31}
+                            , #{ZSTTM11}
+                            , #{ZENDTM11}
+                            , #{ZEMPNM12}
+                            , #{ZSTTM22}
+                            , #{ZENDTM22}
+                            , #{ZEMPNM22}
+                            , #{ZSTTM33}
+                            , #{ZENDTM33}
+                            , #{ZEMPNM32}
+                            , #{ZWTH}
+                            , #{ZTEMPER}
+                            , getdate()
+                           );
+    </update>
+    
+    <!-- SAP 폐수처리시설 관리(용수) -->
+    <update id="mergeSapWtrSupl401Data" parameterType="map">
+        /* SapDataMapper.mergeSapWtrSupl401Data [SapData.xml] */
+        merge into sap_wtr_supl_401 a
+              using (
+                     select   #{MANDT} as mandt
+                            , #{BUKRS} as branch_cd
+                            , #{WERKS} as plant_cd
+                            , #{ZKDATE} as ymd
+                    ) as b
+                 on a.mandt = b.mandt
+                and a.branch_cd = b.branch_cd
+                and a.plant_cd = b.plant_cd
+                and a.ymd = b.ymd
+               when matched then
+                    update set   zautdw = #{ZAUTDW}
+                               , zautsw = #{ZAUTSW}
+                               , zdrydw = #{ZDRYDW}
+                               , zdrysw = #{ZDRYSW}
+                               , zgddw = #{ZGDDW}
+                               , zgdsw = #{ZGDSW}
+                               , zglddw = #{ZGLDDW}
+                               , zglddw1 = #{ZGLDDW1}
+                               , zgldsw = #{ZGLDSW}
+                               , zgldsw1 = #{ZGLDSW1}
+                               , zinddw = #{ZINDDW}
+                               , zindsw = #{ZINDSW}
+                               , zjujdw = #{ZJUJDW}
+                               , zjujsw = #{ZJUJSW}
+                               , zmddw = #{ZMDDW}
+                               , zmdsw = #{ZMDSW}
+                               , zmeldw = #{ZMELDW}
+                               , zmelsw = #{ZMELSW}
+                               , zmngdw = #{ZMNGDW}
+                               , zmngsw = #{ZMNGSW}
+                               , zmpnddw = #{ZMPNDDW}
+                               , zmpndsw = #{ZMPNDSW}
+                               , zmpndw = #{ZMPNDW}
+                               , zmpnsw = #{ZMPNSW}
+                               , zonldw = #{ZONLDW}
+                               , zonlsw = #{ZONLSW}
+                               , zpipdw = #{ZPIPDW}
+                               , zpipsw = #{ZPIPSW}
+                               , zroldw = #{ZROLDW}
+                               , zrolsw = #{ZROLSW}
+                               , zrstdw = #{ZRSTDW}
+                               , zrstsw = #{ZRSTSW}
+                               , ztpndw = #{ZTPNDW}
+                               , ztpnsw = #{ZTPNSW}
+                               , ztrodw = #{ZTRODW}
+                               , ztrosw = #{ZTROSW}
+                               , ztrtdw = #{ZTRTDW}
+                               , ztrtsw = #{ZTRTSW}
+                               , ztwldw = #{ZTWLDW}
+                               , ztwlsw = #{ZTWLSW}
+                               , update_dt = getdate()
+               when not matched then
+                    insert (
+                              mandt
+                            , branch_cd
+                            , plant_cd
+                            , ymd
+                            , zautdw
+                            , zautsw
+                            , zdrydw
+                            , zdrysw
+                            , zgddw
+                            , zgdsw
+                            , zglddw
+                            , zglddw1
+                            , zgldsw
+                            , zgldsw1
+                            , zinddw
+                            , zindsw
+                            , zjujdw
+                            , zjujsw
+                            , zmddw
+                            , zmdsw
+                            , zmeldw
+                            , zmelsw
+                            , zmngdw
+                            , zmngsw
+                            , zmpnddw
+                            , zmpndsw
+                            , zmpndw
+                            , zmpnsw
+                            , zonldw
+                            , zonlsw
+                            , zpipdw
+                            , zpipsw
+                            , zroldw
+                            , zrolsw
+                            , zrstdw
+                            , zrstsw
+                            , ztpndw
+                            , ztpnsw
+                            , ztrodw
+                            , ztrosw
+                            , ztrtdw
+                            , ztrtsw
+                            , ztwldw
+                            , ztwlsw
+                            , create_dt
+                           )
+                           values
+                           (
+                              #{MANDT}
+                            , #{BUKRS}
+                            , #{WERKS}
+                            , #{ZKDATE}
+                            , #{ZAUTDW}
+                            , #{ZAUTSW}
+                            , #{ZDRYDW}
+                            , #{ZDRYSW}
+                            , #{ZGDDW}
+                            , #{ZGDSW}
+                            , #{ZGLDDW}
+                            , #{ZGLDDW1}
+                            , #{ZGLDSW}
+                            , #{ZGLDSW1}
+                            , #{ZINDDW}
+                            , #{ZINDSW}
+                            , #{ZJUJDW}
+                            , #{ZJUJSW}
+                            , #{ZMDDW}
+                            , #{ZMDSW}
+                            , #{ZMELDW}
+                            , #{ZMELSW}
+                            , #{ZMNGDW}
+                            , #{ZMNGSW}
+                            , #{ZMPNDDW}
+                            , #{ZMPNDSW}
+                            , #{ZMPNDW}
+                            , #{ZMPNSW}
+                            , #{ZONLDW}
+                            , #{ZONLSW}
+                            , #{ZPIPDW}
+                            , #{ZPIPSW}
+                            , #{ZROLDW}
+                            , #{ZROLSW}
+                            , #{ZRSTDW}
+                            , #{ZRSTSW}
+                            , #{ZTPNDW}
+                            , #{ZTPNSW}
+                            , #{ZTRODW}
+                            , #{ZTROSW}
+                            , #{ZTRTDW}
+                            , #{ZTRTSW}
+                            , #{ZTWLDW}
+                            , #{ZTWLSW}
+                            , getdate()
+                           );
+    </update>
+    
+    <!-- SAP 폐수처리시설 관리(폐수) -->
+    <update id="mergeSapWtrDisch402Data" parameterType="map">
+        /* SapDataMapper.mergeSapWtrDisch402Data [SapData.xml] */
+        merge into sap_wtr_disch_402 a
+              using (
+                     select   #{MANDT} as mandt
+                            , #{BUKRS} as branch_cd
+                            , #{WERKS} as plant_cd
+                            , #{ZKDATE} as ymd
+                    ) as b
+                 on a.mandt = b.mandt
+                and a.branch_cd = b.branch_cd
+                and a.plant_cd = b.plant_cd
+                and a.ymd = b.ymd
+               when matched then
+                    update set   zclddw = #{ZCLDDW}
+                               , zcldsw = #{ZCLDSW}
+                               , zcondw = #{ZCONDW}
+                               , zconsw = #{ZCONSW}
+                               , zfoedw = #{ZFOEDW}
+                               , zfoesw = #{ZFOESW}
+                               , zotedw = #{ZOTEDW}
+                               , zotesw = #{ZOTESW}
+                               , zrcydw = #{ZRCYDW}
+                               , zrcysw = #{ZRCYSW}
+                               , zthedw = #{ZTHEDW}
+                               , zthesw = #{ZTHESW}
+                               , update_dt = getdate()
+               when not matched then
+                    insert (
+                              mandt
+                            , branch_cd
+                            , plant_cd
+                            , ymd
+                            , zclddw
+                            , zcldsw
+                            , zcondw
+                            , zconsw
+                            , zfoedw
+                            , zfoesw
+                            , zotedw
+                            , zotesw
+                            , zrcydw
+                            , zrcysw
+                            , zthedw
+                            , zthesw
+                            , create_dt
+                           )
+                           values
+                           (
+                              #{MANDT}
+                            , #{BUKRS}
+                            , #{WERKS}
+                            , #{ZKDATE}
+                            , #{ZCLDDW}
+                            , #{ZCLDSW}
+                            , #{ZCONDW}
+                            , #{ZCONSW}
+                            , #{ZFOEDW}
+                            , #{ZFOESW}
+                            , #{ZOTEDW}
+                            , #{ZOTESW}
+                            , #{ZRCYDW}
+                            , #{ZRCYSW}
+                            , #{ZTHEDW}
+                            , #{ZTHESW}
+                            , getdate()
+                           );
+    </update>
+    
+    <!-- SAP 폐수처리시설 관리(전력) -->
+    <update id="mergeSapWtrPwr403Data" parameterType="map">
+        /* SapDataMapper.mergeSapWtrPwr403Data [SapData.xml] */
+        merge into sap_wtr_pwr_403 a
+              using (
+                     select   #{MANDT} as mandt
+                            , #{BUKRS} as branch_cd
+                            , #{WERKS} as plant_cd
+                            , #{ZKDATE} as ymd
+                    ) as b
+                 on a.mandt = b.mandt
+                and a.branch_cd = b.branch_cd
+                and a.plant_cd = b.plant_cd
+                and a.ymd = b.ymd
+               when matched then
+                    update set   zonedw = #{ZONEDW}
+                               , zonesw = #{ZONESW}
+                               , ztwedw = #{ZTWEDW}
+                               , ztwesw = #{ZTWESW}
+                               , ztredw = #{ZTREDW}
+                               , ztresw = #{ZTRESW}
+                               , zfredw = #{ZFREDW}
+                               , zfresw = #{ZFRESW}
+                               , zlgtdw = #{ZLGTDW}
+                               , zlgtsw = #{ZLGTSW}
+                               , zlgtrdw = #{ZLGTRDW}
+                               , zlgtrsw = #{ZLGTRSW}
+                               , update_dt = getdate()
+               when not matched then
+                    insert (
+                              mandt
+                            , branch_cd
+                            , plant_cd
+                            , ymd
+                            , zonedw
+                            , zonesw
+                            , ztwedw
+                            , ztwesw
+                            , ztredw
+                            , ztresw
+                            , zfredw
+                            , zfresw
+                            , zlgtdw
+                            , zlgtsw
+                            , zlgtrdw
+                            , zlgtrsw
+                            , create_dt
+                           )
+                           values
+                           (
+                              #{MANDT}
+                            , #{BUKRS}
+                            , #{WERKS}
+                            , #{ZKDATE}
+                            , #{ZONEDW}
+                            , #{ZONESW}
+                            , #{ZTWEDW}
+                            , #{ZTWESW}
+                            , #{ZTREDW}
+                            , #{ZTRESW}
+                            , #{ZFREDW}
+                            , #{ZFRESW}
+                            , #{ZLGTDW}
+                            , #{ZLGTSW}
+                            , #{ZLGTRDW}
+                            , #{ZLGTRSW}
+                            , getdate()
+                           );
+    </update>
+    
+    <!-- SAP 폐수처리시설 관리(약품) -->
+    <update id="mergeSapWtrChem404Data" parameterType="map">
+        /* SapDataMapper.mergeSapWtrChem404Data [SapData.xml] */
+        merge into sap_wtr_chem_404 a
+              using (
+                     select   #{MANDT} as mandt
+                            , #{BUKRS} as branch_cd
+                            , #{WERKS} as plant_cd
+                            , #{ZKDATE} as ymd
+                            , #{ZEQUGB} as zequgb
+                    ) as b
+                 on a.mandt = b.mandt
+                and a.branch_cd = b.branch_cd
+                and a.plant_cd = b.plant_cd
+                and a.ymd = b.ymd
+                and a.zequgb = b.zequgb
+               when matched then
+                    update set   zacsnsi = #{ZACSNSI}
+                               , zacsnsj = #{ZACSNSJ}
+                               , zacsnss = #{ZACSNSS}
+                               , zacsnsu = #{ZACSNSU}
+                               , zemubri = #{ZEMUBRI}
+                               , zemubrj = #{ZEMUBRJ}
+                               , zemubrs = #{ZEMUBRS}
+                               , zemubru = #{ZEMUBRU}
+                               , zgasusi = #{ZGASUSI}
+                               , zgasusj = #{ZGASUSJ}
+                               , zgasuss = #{ZGASUSS}
+                               , zgasusu = #{ZGASUSU}
+                               , zhws10j = #{ZHWS10J}
+                               , zhws10s = #{ZHWS10S}
+                               , zhws10u = #{ZHWS10U}
+                               , zhws95i = #{ZHWS95I}
+                               , zhws95j = #{ZHWS95J}
+                               , zhws95s = #{ZHWS95S}
+                               , zhws95u = #{ZHWS95U}
+                               , zmagsi = #{ZMAGSI}
+                               , zmagsj = #{ZMAGSJ}
+                               , zmagss = #{ZMAGSS}
+                               , zmagsu = #{ZMAGSU}
+                               , zsahhni = #{ZSAHHNI}
+                               , zsahhnj = #{ZSAHHNJ}
+                               , zsahhns = #{ZSAHHNS}
+                               , zsahhnu = #{ZSAHHNU}
+                               , zsopoji = #{ZSOPOJI}
+                               , zsopojj = #{ZSOPOJJ}
+                               , zsopojs = #{ZSOPOJS}
+                               , zsopoju = #{ZSOPOJU}
+                               , zsosuhi = #{ZSOSUHI}
+                               , zsosuhj = #{ZSOSUHJ}
+                               , zsosuhs = #{ZSOSUHS}
+                               , zsosuhu = #{ZSOSUHU}
+                               , zunjpji = #{ZUNJPJI}
+                               , zunjpjj = #{ZUNJPJJ}
+                               , zunjpjs = #{ZUNJPJS}
+                               , zunjpju = #{ZUNJPJU}
+                               , zusnbti = #{ZUSNBTI}
+                               , zusnbtj = #{ZUSNBTJ}
+                               , zusnbts = #{ZUSNBTS}
+                               , zusnbtu = #{ZUSNBTU}
+                               , update_dt = getdate()
+               when not matched then
+                    insert (
+                              mandt
+                            , branch_cd
+                            , plant_cd
+                            , ymd
+                            , zequgb
+                            , zacsnsi
+                            , zacsnsj
+                            , zacsnss
+                            , zacsnsu
+                            , zemubri
+                            , zemubrj
+                            , zemubrs
+                            , zemubru
+                            , zgasusi
+                            , zgasusj
+                            , zgasuss
+                            , zgasusu
+                            , zhws10j
+                            , zhws10s
+                            , zhws10u
+                            , zhws95i
+                            , zhws95j
+                            , zhws95s
+                            , zhws95u
+                            , zmagsi
+                            , zmagsj
+                            , zmagss
+                            , zmagsu
+                            , zsahhni
+                            , zsahhnj
+                            , zsahhns
+                            , zsahhnu
+                            , zsopoji
+                            , zsopojj
+                            , zsopojs
+                            , zsopoju
+                            , zsosuhi
+                            , zsosuhj
+                            , zsosuhs
+                            , zsosuhu
+                            , zunjpji
+                            , zunjpjj
+                            , zunjpjs
+                            , zunjpju
+                            , zusnbti
+                            , zusnbtj
+                            , zusnbts
+                            , zusnbtu
+                            , create_dt
+                           )
+                           values
+                           (
+                              #{MANDT}
+                            , #{BUKRS}
+                            , #{WERKS}
+                            , #{ZKDATE}
+                            , #{ZEQUGB}
+                            , #{ZACSNSI}
+                            , #{ZACSNSJ}
+                            , #{ZACSNSS}
+                            , #{ZACSNSU}
+                            , #{ZEMUBRI}
+                            , #{ZEMUBRJ}
+                            , #{ZEMUBRS}
+                            , #{ZEMUBRU}
+                            , #{ZGASUSI}
+                            , #{ZGASUSJ}
+                            , #{ZGASUSS}
+                            , #{ZGASUSU}
+                            , #{ZHWS10J}
+                            , #{ZHWS10S}
+                            , #{ZHWS10U}
+                            , #{ZHWS95I}
+                            , #{ZHWS95J}
+                            , #{ZHWS95S}
+                            , #{ZHWS95U}
+                            , #{ZMAGSI}
+                            , #{ZMAGSJ}
+                            , #{ZMAGSS}
+                            , #{ZMAGSU}
+                            , #{ZSAHHNI}
+                            , #{ZSAHHNJ}
+                            , #{ZSAHHNS}
+                            , #{ZSAHHNU}
+                            , #{ZSOPOJI}
+                            , #{ZSOPOJJ}
+                            , #{ZSOPOJS}
+                            , #{ZSOPOJU}
+                            , #{ZSOSUHI}
+                            , #{ZSOSUHJ}
+                            , #{ZSOSUHS}
+                            , #{ZSOSUHU}
+                            , #{ZUNJPJI}
+                            , #{ZUNJPJJ}
+                            , #{ZUNJPJS}
+                            , #{ZUNJPJU}
+                            , #{ZUSNBTI}
+                            , #{ZUSNBTJ}
+                            , #{ZUSNBTS}
+                            , #{ZUSNBTU}
+                            , getdate()
+                           );
+    </update>
+    
+    <!-- SAP 폐수처리시설 관리(슬러지) -->
+    <update id="mergeSapWtrSlu405Data" parameterType="map">
+        /* SapDataMapper.mergeSapWtrSlu405Data [SapData.xml] */
+        merge into sap_wtr_slu_405 a
+              using (
+                     select   #{MANDT} as mandt
+                            , #{BUKRS} as branch_cd
+                            , #{WERKS} as plant_cd
+                            , #{ZKDATE} as ymd
+                    ) as b
+                 on a.mandt = b.mandt
+                and a.branch_cd = b.branch_cd
+                and a.plant_cd = b.plant_cd
+                and a.ymd = b.ymd
+               when matched then
+                    update set   zprowe = #{ZPROWE}
+                               , zpercent = #{ZPERCENT}
+                               , zextwe = #{ZEXTWE}
+                               , zstowe = #{ZSTOWE}
+                               , update_dt = getdate()
+               when not matched then
+                    insert (
+                              mandt
+                            , branch_cd
+                            , plant_cd
+                            , ymd
+                            , zprowe
+                            , zpercent
+                            , zextwe
+                            , zstowe
+                            , create_dt
+                           )
+                           values
+                           (
+                              #{MANDT}
+                            , #{BUKRS}
+                            , #{WERKS}
+                            , #{ZKDATE}
+                            , #{ZPROWE}
+                            , #{ZPERCENT}
+                            , #{ZEXTWE}
+                            , #{ZSTOWE}
+                            , getdate()
+                           );
+    </update>
+    
+    <!-- 수질운영일지 메인정보-날씨,온도,근무자 프로시져 -->
+    <update id="intfWasteWaterProcedure1" statementType="CALLABLE">
+        { call IF_SAP_WTR_LOG_TO_SHE (
+            #{reqDate}
+        ) }
+    </update>
+    
+    <!-- 수질운영일지 용수사용량, 폐수배출량(일부) 프로시져 -->
+    <update id="intfWasteWaterProcedure2" statementType="CALLABLE">
+        { call IF_SAP_WTR_SUPL_TO_SHE (
+            #{reqDate}
+        ) }
+    </update>
+    
+    <!-- 수질운영일지 폐수배출량 프로시져 -->
+    <update id="intfWasteWaterProcedure3" statementType="CALLABLE">
+        { call IF_SAP_WTR_DISCH_TO_SHE (
+            #{reqDate}
+        ) }
+    </update>
+    
+    <!-- 수질운영일지 전력사용량 프로시져 -->
+    <update id="intfWasteWaterProcedure4" statementType="CALLABLE">
+        { call IF_SAP_WTR_ELEC_PWR_TO_SHE (
+            #{reqDate}
+        ) }
+    </update>
+    
+    <!-- 수질운영일지 약품사용량 프로시져 -->
+    <update id="intfWasteWaterProcedure5" statementType="CALLABLE">
+        { call IF_SAP_WTR_CHEM_TO_SHE (
+            #{reqDate}
+        ) }
+    </update>
+    
+    <!-- 수질운영일지 슬러지처리량 프로시져 -->
+    <update id="intfWasteWaterProcedure6" statementType="CALLABLE">
+        { call IF_SAP_WTR_SLUDGE_TO_SHE (
+            #{reqDate}
+        ) }
+    </update>
+    
+    <!-- 수질운영일지 배출시설가동시간 프로시져 -->
+    <update id="intfWasteWaterProcedure7" statementType="CALLABLE">
+        { call IF_SAP_WTR_DISCH_TM_TO_SHE (
+            #{reqDate}
+        ) }
+    </update>
+    
+    <!-- 수질운영일지 방지시설가동시간 프로시져 -->
+    <update id="intfWasteWaterProcedure8" statementType="CALLABLE">
+        { call IF_SAP_WTR_PREVENT_TM_TO_SHE (
+            #{reqDate}
+        ) }
+    </update>
+    
+    <!-- 수질운영일지 자가측정 분석결과 프로시져 -->
+    <update id="intfWasteWaterProcedure9" statementType="CALLABLE">
+        { call IF_SAP_WTR_MEAS_TO_SHE (
+            #{reqDate}
+        ) }
+    </update>
+    
+    <!-- 대기운영일지 작성일자 프로시져 -->
+    <update id="intfAirPrevProcedure1" statementType="CALLABLE">
+        { call IF_SAP_AIR_LOG_TO_SHE (
+            #{reqDate}
+        ) }
+    </update>
+    
+    <!-- 대기운영일지 배출시설 가동시간 프로시져 -->
+    <update id="intfAirPrevProcedure2" statementType="CALLABLE">
+        { call IF_SAP_AIR_DISCH_TM_TO_SHE (
+            #{reqDate}
+        ) }
+    </update>
+    
+    <!-- 대기운영일지 방지시설 전력사용량 프로시져 -->
+    <update id="intfAirPrevProcedure3" statementType="CALLABLE">
+        { call IF_SAP_AIR_PREVENT_ELEC_PWR_TO_SHE (
+            #{reqDate}
+        ) }
+    </update>
+    
+    <!-- 대기운영일지 배출시설 연료사용량 프로시져 -->
+    <update id="intfAirPrevProcedure4" statementType="CALLABLE">
+        { call IF_SAP_AIR_FUEL_TO_SHE (
+            #{reqDate}
+        ) }
+    </update>
+    
+    <!-- 대기운영일지 원료사용량 프로시져 -->
+    <update id="intfAirPrevProcedure5" statementType="CALLABLE">
+        { call IF_SAP_AIR_INGR_TO_SHE (
+            #{reqDate}
+        ) }
+    </update>
+</mapper>

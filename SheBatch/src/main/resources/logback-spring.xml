@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="10 seconds">
+
+    <include resource="org/springframework/boot/logging/logback/defaults.xml" />
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml" />
+
+    <!-- #########################  console로 log 남기기  #########################  -->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>
+                    ▶ %-5level %d{HH:mm:ss.SSS} [%thread] %logger[%method:%line] - %msg%n
+            </pattern>
+        </encoder>
+    </appender>
+
+    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter" />
+
+    <!-- TRACE > DEBUG > INFO > WARN > ERROR, 대소문자 구분 안함 -->
+    <!-- profile 을 읽어서 appender 을 설정할수 있다.(phase별 파일을 안만들어도 되는 좋은 기능) -->
+    <springProfile name="local">
+        <!-- 개발환경에서는 mybatis의 쿼리와 결과를 console창에서 확인할 수 있도록 아래 설정을 해줌. -->
+        <logger name="jdbc.sqlonly" additivity="false">
+            <level value="INFO"/>
+            <appender-ref ref="console"/>
+        </logger>
+
+        <logger name="jdbc.sqltiming" additivity="false">
+            <level value="OFF"/>
+            <appender-ref ref="console"/>
+        </logger>
+
+        <logger name="jdbc.audit" additivity="false">
+            <level value="OFF"/>
+            <appender-ref ref="console"/>
+        </logger>
+
+        <logger name="jdbc.resultset" additivity="false">
+            <level value="OFF"/>
+            <appender-ref ref="console"/>
+        </logger>
+
+        <logger name="jdbc.resultsettable" additivity="false">
+            <level value="INFO"/>
+            <appender-ref ref="console"/>
+        </logger>
+
+        <logger name="jdbc.connection" additivity="false">
+            <level value="OFF"/>
+            <appender-ref ref="console"/>
+        </logger>
+
+        <root level="info">
+            <appender-ref ref="console" />
+        </root>
+    </springProfile>
+    <springProfile name="stg">
+        <!-- #########################  file로 log 남기기  #########################  -->
+        <property name="LOG_DIR" value="C:/ESH/logs/kg_log" />
+        <property name="LOG_PATH_NAME" value="${LOG_DIR}/KG-BATCH-SERVER-logging.log" />
+
+        <appender name="ROLLING_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <!-- 파일 경로 -->
+            <file>${LOG_PATH_NAME}</file>
+            <!--로깅 파일이 특정 조건을 넘어가면 다른 파일로 만들어 준다.-->
+            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                <!-- .gz,.zip 등을 넣으면 자동으로 일자별 로그파일 압축 -->
+                <fileNamePattern>${LOG_DIR}/rolling/KG-BATCH-SERVER-logging.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
+                <maxFileSize>50MB</maxFileSize>
+                <!-- 일자별 로그파일 최대 보관주기(일단위) 만약 해당 설정일 이상된 파일은 자동으로 제거-->
+                <maxHistory>60</maxHistory>
+                <totalSizeCap>10GB</totalSizeCap>
+            </rollingPolicy>
+            <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+                <!-- 출력패턴 -->
+                <pattern>
+                    ▶ %-5level %d{HH:mm:ss.SSS} [%thread] %logger[%method:%line] - %msg%n
+                </pattern>
+            </encoder>
+        </appender>
+
+        <logger name="jdbc.sqlonly" additivity="false">
+            <level value="DEBUG"/>
+            <appender-ref ref="ROLLING_FILE"/>
+        </logger>
+
+        <logger name="jdbc.sqltiming" additivity="false">
+            <level value="OFF"/>
+            <appender-ref ref="ROLLING_FILE"/>
+        </logger>
+
+        <logger name="jdbc.audit" additivity="false">
+            <level value="OFF"/>
+            <appender-ref ref="ROLLING_FILE"/>
+        </logger>
+
+        <logger name="jdbc.resultset" additivity="false">
+            <level value="OFF"/>
+            <appender-ref ref="ROLLING_FILE"/>
+        </logger>
+
+        <logger name="jdbc.resultsettable" additivity="false">
+            <level value="OFF"/>
+            <appender-ref ref="ROLLING_FILE"/>
+        </logger>
+
+        <logger name="jdbc.connection" additivity="false">
+            <level value="OFF"/>
+            <appender-ref ref="ROLLING_FILE"/>
+        </logger>
+
+        <root level="info">
+            <appender-ref ref="ROLLING_FILE" />
+        </root>
+    </springProfile>
+    <springProfile name="dev">
+        <!-- #########################  file로 log 남기기  #########################  -->
+        <property name="LOG_DIR" value="D:/logs/BATCH" />
+        <property name="LOG_PATH_NAME" value="${LOG_DIR}/KG-BATCH-SERVER-logging.log" />
+
+        <appender name="ROLLING_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <!-- 파일 경로 -->
+            <file>${LOG_PATH_NAME}</file>
+            <!--로깅 파일이 특정 조건을 넘어가면 다른 파일로 만들어 준다.-->
+            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                <!-- .gz,.zip 등을 넣으면 자동으로 일자별 로그파일 압축 -->
+                <fileNamePattern>${LOG_DIR}/rolling/KG-BATCH-SERVER-logging.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
+                <maxFileSize>50MB</maxFileSize>
+                <!-- 일자별 로그파일 최대 보관주기(일단위) 만약 해당 설정일 이상된 파일은 자동으로 제거-->
+                <maxHistory>60</maxHistory>
+                <totalSizeCap>10GB</totalSizeCap>
+            </rollingPolicy>
+            <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+                <!-- 출력패턴 -->
+                <pattern>
+                    ▶ %-5level %d{HH:mm:ss.SSS} [%thread] %logger[%method:%line] - %msg%n
+                </pattern>
+            </encoder>
+        </appender>
+
+        <logger name="jdbc.sqlonly" additivity="false">
+            <level value="INFO"/>
+            <appender-ref ref="ROLLING_FILE"/>
+        </logger>
+
+        <logger name="jdbc.sqltiming" additivity="false">
+            <level value="OFF"/>
+            <appender-ref ref="ROLLING_FILE"/>
+        </logger>
+
+        <logger name="jdbc.audit" additivity="false">
+            <level value="OFF"/>
+            <appender-ref ref="ROLLING_FILE"/>
+        </logger>
+
+        <logger name="jdbc.resultset" additivity="false">
+            <level value="OFF"/>
+            <appender-ref ref="ROLLING_FILE"/>
+        </logger>
+
+        <logger name="jdbc.resultsettable" additivity="false">
+            <level value="INFO"/>
+            <appender-ref ref="ROLLING_FILE"/>
+        </logger>
+
+        <logger name="jdbc.connection" additivity="false">
+            <level value="OFF"/>
+            <appender-ref ref="ROLLING_FILE"/>
+        </logger>
+
+        <root level="info">
+            <appender-ref ref="ROLLING_FILE" />
+        </root>
+    </springProfile>
+    <springProfile name="prd">
+        <!-- #########################  file로 log 남기기  #########################  -->
+        <property name="LOG_DIR" value="D:/logs/BATCH" />
+        <property name="LOG_PATH_NAME" value="${LOG_DIR}/KG-BATCH-SERVER-logging.log" />
+
+        <appender name="ROLLING_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <!-- 파일 경로 -->
+            <file>${LOG_PATH_NAME}</file>
+            <!--로깅 파일이 특정 조건을 넘어가면 다른 파일로 만들어 준다.-->
+            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                <!-- .gz,.zip 등을 넣으면 자동으로 일자별 로그파일 압축 -->
+                <fileNamePattern>${LOG_DIR}/rolling/KG-BATCH-SERVER-logging.%d{yyyy-MM-dd}.%i.gz</fileNamePattern>
+                <maxFileSize>50MB</maxFileSize>
+                <!-- 일자별 로그파일 최대 보관주기(일단위) 만약 해당 설정일 이상된 파일은 자동으로 제거-->
+                <maxHistory>60</maxHistory>
+                <totalSizeCap>10GB</totalSizeCap>
+            </rollingPolicy>
+            <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+                <!-- 출력패턴 -->
+                <pattern>
+                    ▶ %-5level %d{HH:mm:ss.SSS} [%thread] %logger[%method:%line] - %msg%n
+                </pattern>
+            </encoder>
+        </appender>
+
+        <logger name="jdbc.sqlonly" additivity="false">
+            <level value="INFO"/>
+            <appender-ref ref="ROLLING_FILE"/>
+        </logger>
+
+        <logger name="jdbc.sqltiming" additivity="false">
+            <level value="OFF"/>
+            <appender-ref ref="ROLLING_FILE"/>
+        </logger>
+
+        <logger name="jdbc.audit" additivity="false">
+            <level value="OFF"/>
+            <appender-ref ref="ROLLING_FILE"/>
+        </logger>
+
+        <logger name="jdbc.resultset" additivity="false">
+            <level value="OFF"/>
+            <appender-ref ref="ROLLING_FILE"/>
+        </logger>
+
+        <logger name="jdbc.resultsettable" additivity="false">
+            <level value="INFO"/>
+            <appender-ref ref="ROLLING_FILE"/>
+        </logger>
+
+        <logger name="jdbc.connection" additivity="false">
+            <level value="OFF"/>
+            <appender-ref ref="ROLLING_FILE"/>
+        </logger>
+
+        <root level="info">
+            <appender-ref ref="ROLLING_FILE" />
+        </root>
+    </springProfile>
+
+</configuration>

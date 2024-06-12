@@ -1,0 +1,67 @@
+<?xml version= "1.0" encoding= "UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace= "com.batch.mapper.MailMapper">
+    
+    <insert id="insertMailLog" parameterType="com.batch.utils.model.Mail">
+        <selectKey keyProperty="logNo" resultType="int" order="BEFORE">
+            select next value for seq_com_mail_log as log_no
+        </selectKey>
+        insert into com_mail_log (
+            log_no
+            , sendem
+            , sendnm
+            , toem
+            , tonm
+            , ccem
+            , ccnm
+            , bccem
+            , bccnm
+            , title
+            , content
+            , send_yn
+            , try_count
+            , req_dt
+        )
+        values (
+            #{logNo}
+            , #{sendem}
+            , #{sendnm}
+            , #{toem}
+            , #{tonm}
+            , #{ccem}
+            , #{ccnm}
+            , #{bccem}
+            , #{bccnm}
+            , #{title}
+            , #{content}
+            , 'N'
+            , 0
+            , getdate()
+        )    
+    </insert>
+    
+    <select id="getMailLogs" resultType="com.batch.utils.model.Mail">
+        select log_no, sendem, sendnm, toem, tonm, ccem, ccnm, bccem, bccnm, title, content, try_count
+        from com_mail_log
+        where send_yn = 'N'
+        and try_count &lt; 5
+        order by req_dt
+    </select>
+    
+    <select id="getMailLog" resultType="com.batch.utils.model.Mail">
+        select log_no, sendem, sendnm, toem, tonm, ccem, ccnm, bccem, bccnm, title, content, try_count
+        from com_mail_log
+        where log_no = #{logNo}
+    </select>
+    
+    <update id="updateSendResult" parameterType="com.batch.utils.model.Mail">
+        update com_mail_log
+        set send_yn = #{sendYn}
+            , try_count = #{tryCount}
+            , send_dt = case when #{sendYn} = 'Y' then getdate() else null end
+            , fail_desc = #{failDesc}
+        where log_no = #{logNo}
+    </update>
+    
+</mapper>

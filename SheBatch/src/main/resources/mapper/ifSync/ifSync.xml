@@ -1,0 +1,14 @@
+<?xml version= "1.0" encoding= "UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace= "com.batch.mapper.IfSyncMapper">
+
+    <select id="hrUserSync" resultType="HashMap">
+        exec IF_PP_HR_USER_TMP_TO_SHE
+    </select>
+
+    <select id="vendorSync" resultType="HashMap">
+        exec IF_PP_VENDER_TMP_TO_SHE
+    </select>
+
+</mapper>
